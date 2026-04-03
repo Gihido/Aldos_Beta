@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Text RPG Online</title>
+  <style>
+    :root{--panel-open:330px;--panel-close:72px;--bg:#2d2a27;--bg2:#1f1d1a;--panel:#46403a;--panel2:#5a534d;--line:#7c7269;--text:#f4efe8;--muted:#cdc1b3;--accent:#f09a45;--accent2:#cf7531}
+    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top,#555049,var(--bg2) 55%)}
+    .app{min-height:100vh;display:grid;grid-template-columns:var(--panel-open) 1fr;gap:14px;padding:14px;transition:.25s}
+    .app.sidebar-collapsed{grid-template-columns:var(--panel-close) 1fr}
+    .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 28px rgba(0,0,0,.25)}
+    .sidebar{padding:14px;display:flex;flex-direction:column;gap:12px;overflow:auto;transition:.25s ease;max-height:calc(100vh - 28px);position:sticky;top:14px}
+    .sidebar.closed{padding:14px 8px}.sidebar.closed .hide-when-closed{display:none}
+    .toggle-btn{border:0;background:var(--accent);color:#26140a;border-radius:12px;padding:8px 10px;font-weight:800;cursor:pointer}
+    .bars{display:grid;gap:8px}.bar{height:12px;background:#211d19;border-radius:999px;overflow:hidden}.fill{height:100%;transition:width .3s ease}.hp{background:linear-gradient(90deg,#ff7e66,#ce4937)}.mana{background:linear-gradient(90deg,#ffbe74,#ff8a2d)}
+    .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs button,.btn{border:0;border-radius:12px;padding:11px 12px;font-weight:700;cursor:pointer;transition:.2s ease}
+    .tabs button{background:#6c6259;color:#fff}.tabs button.active{background:var(--accent);color:#2a1406}.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#2b1607}.btn.secondary{background:#72685f;color:#fff}.btn.warn{background:#a94747;color:#fff}
+    .content{padding:14px;overflow:auto}.screen{display:none;animation:fade .25s ease}.screen.active{display:block}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .location-hero{height:180px;border-radius:12px;background-size:cover;background-position:center;position:relative;overflow:hidden;border:1px solid #8a7d71;margin-bottom:10px;animation:locPulse 6s ease-in-out infinite}
+    .location-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,158,61,.25),transparent 45%)}@keyframes locPulse{0%{transform:scale(1)}50%{transform:scale(1.015)}100%{transform:scale(1)}}
+    .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
+    .item-card,.monster-card{background:#3f3832;border:1px solid #8a7d71;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}.item-top{display:flex;gap:10px;align-items:center}.thumb{width:56px;height:56px;border-radius:10px;border:1px solid #9f8c7a;background:#2c2622;display:grid;place-items:center;font-size:24px;overflow:hidden}
+    .monster-image{height:120px;border-radius:10px;background-size:cover;background-position:center;border:1px solid #8a7d71;animation:monsterFloat 4s ease-in-out infinite}@keyframes monsterFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .small{font-size:13px;color:var(--muted)} .row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+    .equip-grid{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:10px}.slot{background:#372f29;border:1px dashed #ad8e74;border-radius:12px;padding:10px;min-height:94px}
+    .battle-overlay,.travel-overlay,.skill-chooser,.result-overlay{position:fixed;inset:0;background:rgba(18,14,10,.76);display:none;align-items:center;justify-content:center;padding:15px;z-index:20}
+    .battle-overlay.open,.travel-overlay.open,.skill-chooser.open,.result-overlay.open{display:flex}.battle-box,.travel-box,.chooser-box,.result-box{width:min(840px,100%);padding:16px}.battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .fighter{background:#3e3731;border:1px solid #8d7f72;border-radius:12px;padding:10px}.fighter img{width:100%;max-height:160px;object-fit:cover;border-radius:10px;border:1px solid #917f6f}
+    .log{max-height:140px;overflow:auto;background:#2d2722;border:1px solid #72665a;border-radius:10px;padding:8px}.travel-way{height:14px;background:#2d2722;border-radius:999px;overflow:hidden}.travel-progress{height:100%;width:0;background:linear-gradient(90deg,#f09a45,#ffcf90)}
+    #adminEntry{display:none}
+    @media (max-width:960px){.app,.app.sidebar-collapsed{grid-template-columns:1fr;padding:8px;gap:8px}.sidebar{position:sticky;top:0;max-height:none;z-index:10}.tabs{grid-template-columns:repeat(3,1fr)}.content{padding:10px}.battle-grid{grid-template-columns:1fr}.equip-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body onload="loadGame()">
+  <div class="app" id="appRoot">
+    <aside id="sidebar" class="panel sidebar">
+      <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+      <div class="hide-when-closed">
+        <h3 style="margin:0">Игрок: <span id="playerName">...</span></h3>
+        <div class="small" id="playerClass"></div>
+        <div class="bars">
+          <div class="small">HP <span id="hpText"></span></div><div class="bar"><div id="hpBar" class="fill hp"></div></div>
+          <div class="small">Мана <span id="manaText"></span></div><div class="bar"><div id="manaBar" class="fill mana"></div></div>
+          <div class="small">Вес сумки: <span id="invWeight"></span>/50</div>
+          <div class="small">Вес сундука: <span id="chestWeight"></span>/50</div>
+          <div class="small">Регенерация вне боя: +1 HP / +2 маны в сек</div>
+        </div>
+        <div class="tabs">
+          <button data-tab id="tab-location" onclick="switchPanel('location')">Локация</button>
+          <button data-tab id="tab-inventory" onclick="switchPanel('inventory')">Инвентарь</button>
+          <button data-tab id="tab-chest" onclick="switchPanel('chest')">Сундук</button>
+          <button data-tab id="tab-skills" onclick="switchPanel('skills')">Умения</button>
+          <button data-tab id="tab-character" onclick="switchPanel('character')">Персонаж</button>
+          <button id="adminEntry" onclick="openAdminPanel()">Админ</button>
+          <button class="warn" onclick="logout()">Выйти</button>
+        </div>
+      </div>
+    </aside>
+
+    <main class="panel content">
+      <section id="panel-location" class="screen"><div id="locationHero" class="location-hero"></div><h2 id="locationTitle"></h2><p class="small" id="locationDescription"></p><div class="row" id="locationActions"></div><h3>Монстры</h3><div id="monsterList" class="cards"></div></section>
+      <section id="panel-inventory" class="screen"><h2>Сумка (лимит 50)</h2><div id="inventoryList" class="cards"></div></section>
+      <section id="panel-chest" class="screen"><h2>Сундук (лимит 50)</h2><div id="chestState" class="small"></div><div id="chestList" class="cards"></div></section>
+      <section id="panel-skills" class="screen"><h2>Умения</h2><div id="skillList" class="cards"></div></section>
+      <section id="panel-character" class="screen"><h2>Персонаж</h2><img src="https://placehold.co/640x220/5f564e/fff?text=Hero" alt="hero" style="width:100%;border-radius:12px;border:1px solid #8a7d71;margin-bottom:8px"><div class="equip-grid" id="equipmentSlots"></div></section>
+    </main>
+  </div>
+
+  <div id="travelOverlay" class="travel-overlay"><div class="panel travel-box"><h2 id="travelText">Переход...</h2><div class="travel-way"><div id="travelProgress" class="travel-progress"></div></div></div></div>
+
+  <div id="battleOverlay" class="battle-overlay">
+    <div class="panel battle-box">
+      <h2 id="battleTitle">Бой</h2>
+      <div class="battle-grid">
+        <div class="fighter"><img src="https://placehold.co/360x160/6c5f53/fff?text=Hero" alt="player"><div class="small" id="battlePlayerHp"></div><div class="bar"><div id="battlePlayerBar" class="fill hp"></div></div></div>
+        <div class="fighter"><img id="battleMonsterImg" src="https://placehold.co/360x160/4a3f37/fff?text=Monster" alt="monster"><div class="small" id="battleMonsterHp"></div><div class="bar"><div id="battleMonsterBar" class="fill mana"></div></div></div>
+      </div>
+      <div class="row" style="margin-top:10px"><div class="small">До конца хода: <span id="battleTimer">10</span> сек</div><div><button class="btn" onclick="battleAction('attack')">Атака</button> <button class="btn secondary" onclick="openSkillChooser()">Умение</button> <button class="btn secondary" onclick="battleAction('wait')">Ждать</button></div></div>
+      <div id="battleLog" class="log small" style="margin-top:10px"></div>
+    </div>
+  </div>
+
+  <div id="skillChooser" class="skill-chooser"><div class="panel chooser-box"><h3>Выбор умения</h3><div id="skillChooserList" class="cards"></div><button class="btn secondary" onclick="closeSkillChooser()">Закрыть</button></div></div>
+  <div id="resultOverlay" class="result-overlay"><div class="panel result-box"><h2 id="resultTitle"></h2><p id="resultText" class="small"></p><div id="resultLoot"></div><button class="btn" onclick="closeResultModal()">Продолжить</button></div></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

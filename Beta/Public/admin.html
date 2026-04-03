@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ панель</title>
+  <style>
+    body{margin:0;font-family:Segoe UI,Arial;background:#221f1b;color:#f4efe8}
+    .wrap{max-width:1300px;margin:16px auto;padding:0 10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
+    .card{background:#4b433d;border:1px solid #7f7468;border-radius:12px;padding:10px}
+    input,select,textarea,button{width:100%;margin-top:6px;padding:9px;border-radius:8px;border:1px solid #8b7d70}
+    button{background:#f09a45;color:#2b1607;font-weight:700;cursor:pointer;border:0}
+    .item-card{background:#3b342f;border:1px solid #6f6459;border-radius:10px;padding:8px;margin-top:6px}
+    .small{font-size:12px;color:#d0c2b4}
+  </style>
+</head>
+<body onload="loadUsers()">
+  <div class="wrap">
+    <h2>Админ-панель Gihido</h2>
+    <div id="adminMessage" class="small"></div>
+    <div class="grid">
+      <div class="card">
+        <h3>Редактор игроков</h3>
+        <select id="playerSelect"></select>
+        <textarea id="banReason" placeholder="Причина бана"></textarea>
+        <button onclick="adminPlayerAction('ban')">Забанить</button>
+        <button onclick="adminPlayerAction('unban')">Разблокировать</button>
+        <label>Выдать вещь игроку:</label>
+        <select id="actionItem"></select>
+        <button onclick="adminPlayerAction('give_item')">Выдать вещь</button>
+        <label>Выдать умение игроку:</label>
+        <select id="actionSkill"></select>
+        <button onclick="adminPlayerAction('give_skill')">Выдать умение</button>
+        <div id="playerInfo"></div>
+      </div>
+
+      <div class="card">
+        <h3>Локации</h3>
+        <form id="locationForm">
+          <input name="code" placeholder="code" required>
+          <input name="name" placeholder="Название" required>
+          <textarea name="description" placeholder="Описание"></textarea>
+          <input name="image_url" placeholder="или URL картинки">
+          <input id="locationImage" type="file" accept="image/*">
+          <input name="next_code" placeholder="next code">
+          <input name="prev_code" placeholder="prev code">
+          <button type="button" onclick="submitWithImage('locationForm','locationImage','/api/admin/locations')">Создать локацию</button>
+        </form>
+        <div id="locationsList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Монстры</h3>
+        <form id="monsterForm">
+          <input name="code" placeholder="code" required>
+          <input name="location_code" placeholder="location code" required>
+          <input name="name" placeholder="Название" required>
+          <input name="hp" type="number" placeholder="HP" required>
+          <input name="max_mana" type="number" placeholder="Mana" value="0">
+          <input name="min_damage" type="number" placeholder="Min dmg" required>
+          <input name="max_damage" type="number" placeholder="Max dmg" required>
+          <input name="image_url" placeholder="или URL картинки">
+          <input id="monsterImage" type="file" accept="image/*">
+          <button type="button" onclick="submitWithImage('monsterForm','monsterImage','/api/admin/monsters')">Создать монстра</button>
+        </form>
+        <div id="monstersList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Лут монстров</h3>
+        <form id="lootForm">
+          <input name="monster_id" type="number" placeholder="monster id" required>
+          <input name="name" placeholder="Название" required>
+          <input name="item_type" placeholder="weapon/armor/consumable" required>
+          <input name="equip_slot" placeholder="slot">
+          <input name="min_damage" type="number" placeholder="min dmg">
+          <input name="max_damage" type="number" placeholder="max dmg">
+          <input name="armor" type="number" placeholder="armor">
+          <input name="heal_hp" type="number" placeholder="heal hp">
+          <input name="heal_mana" type="number" placeholder="heal mana">
+          <input name="weight" type="number" placeholder="weight">
+          <input name="chance" type="number" placeholder="chance %">
+          <textarea name="description" placeholder="Описание"></textarea>
+          <input name="image_url" placeholder="или URL картинки">
+          <input id="lootImage" type="file" accept="image/*">
+          <button type="button" onclick="submitWithImage('lootForm','lootImage','/api/admin/loot')">Создать лут</button>
+        </form>
+        <div id="lootList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Умения</h3>
+        <form id="skillForm">
+          <input name="code" placeholder="code" required>
+          <input name="name" placeholder="Название" required>
+          <textarea name="description" placeholder="Описание"></textarea>
+          <input name="class_code" placeholder="archer/mage/orc" required>
+          <input name="power" type="number" placeholder="power">
+          <input name="mana_cost" type="number" placeholder="mana cost">
+          <input name="effect_type" placeholder="stun/block/crit_boost/none">
+          <input name="effect_chance" type="number" placeholder="effect chance">
+          <input name="cooldown_turns" type="number" placeholder="перезарядка в ходах">
+          <input name="image_url" placeholder="или URL картинки">
+          <input id="skillImage" type="file" accept="image/*">
+          <button type="button" onclick="submitWithImage('skillForm','skillImage','/api/admin/skills')">Создать умение</button>
+        </form>
+        <div id="skillsList"></div>
+      </div>
+
+      <div class="card">
+        <h3>Шаблоны вещей</h3>
+        <form id="itemForm">
+          <input name="name" placeholder="Название" required>
+          <input name="item_type" placeholder="weapon/armor/consumable" required>
+          <input name="equip_slot" placeholder="slot">
+          <input name="min_damage" type="number" placeholder="min dmg">
+          <input name="max_damage" type="number" placeholder="max dmg">
+          <input name="armor" type="number" placeholder="armor">
+          <input name="heal_hp" type="number" placeholder="heal hp">
+          <input name="heal_mana" type="number" placeholder="heal mana">
+          <input name="weight" type="number" placeholder="weight">
+          <textarea name="description" placeholder="Описание"></textarea>
+          <input name="image_url" placeholder="или URL картинки">
+          <input id="itemImage" type="file" accept="image/*">
+          <button type="button" onclick="submitWithImage('itemForm','itemImage','/api/admin/items')">Создать шаблон</button>
+        </form>
+        <div id="itemsList"></div>
+      </div>
+    </div>
+    <button onclick="location.href='game.html'">Назад в игру</button>
+    <button onclick="logout()">Выйти</button>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
