@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text RPG Online</title>
+    <style>
+        :root{--bg:#131722;--panel:#1f2637;--panel2:#252f44;--line:#37435e;--text:#e6edff;--muted:#9eabc8;--accent:#5ea7ff;--ok:#55c678;--bad:#ff7a7a}
+        *{box-sizing:border-box} body{margin:0;font-family:Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top,#1f2840,#0f1320 65%)}
+        .app{display:grid;grid-template-columns:320px 1fr;min-height:100vh;gap:14px;padding:14px}
+        .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:14px}
+        .sidebar{padding:14px;display:flex;flex-direction:column;gap:12px;max-height:calc(100vh - 28px);overflow:auto}
+        .bars{display:grid;gap:8px}.bar{height:11px;background:#121722;border-radius:999px;overflow:hidden}.fill{height:100%}
+        .hp{background:linear-gradient(90deg,#ff6c6c,#d72f2f)} .mana{background:linear-gradient(90deg,#5ea7ff,#3466ff)}
+        .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs button,.btn{border:0;border-radius:10px;padding:10px;font-weight:700;cursor:pointer}
+        .tabs button{background:#2c3650;color:var(--text)} .tabs button.active{background:var(--accent);color:#051127}
+        .screen{display:none}.screen.active{display:block}
+        .content{padding:14px;overflow:auto;max-height:calc(100vh - 28px)}
+        .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+        .card{background:#20283b;border:1px solid #384565;border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;min-height:165px}
+        .small{color:var(--muted);font-size:13px}.row{display:flex;justify-content:space-between;gap:10px;align-items:center}
+        .btn{background:var(--accent);color:#071427}.btn.secondary{background:#34415e;color:var(--text)} .btn.warn{background:#c15050;color:#fff}
+        .equip-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+        .slot{border:1px dashed #5a6c95;border-radius:10px;min-height:90px;padding:8px;background:#1a2232}
+        .monster-dead{opacity:.55}
+        .battle-overlay{position:fixed;inset:0;background:rgba(8,10,20,.78);display:none;align-items:center;justify-content:center;padding:14px}
+        .battle-overlay.open{display:flex}.battle-box{width:min(760px,100%);padding:14px}
+        @media (max-width:900px){.app{grid-template-columns:1fr}.sidebar,.content{max-height:none}}
+    </style>
+</head>
+<body onload="loadGame()">
+<div class="app">
+    <aside class="panel sidebar">
+        <h3 style="margin:0">Игрок: <span id="playerName">...</span></h3>
+        <div class="small" id="playerClass"></div>
+        <div class="bars">
+            <div class="small">HP <span id="hpText"></span></div><div class="bar"><div id="hpBar" class="fill hp"></div></div>
+            <div class="small">Мана <span id="manaText"></span></div><div class="bar"><div id="manaBar" class="fill mana"></div></div>
+        </div>
+        <div class="tabs">
+            <button id="tab-location" onclick="switchPanel('location')">Локация</button>
+            <button id="tab-skills" onclick="switchPanel('skills')">Умения</button>
+            <button id="tab-character" onclick="switchPanel('character')">Персонаж</button>
+            <button class="warn" onclick="logout()">Выйти</button>
+        </div>
+    </aside>
+
+    <main class="panel content">
+        <section id="panel-location" class="screen">
+            <h2 id="locationTitle"></h2>
+            <p class="small" id="locationDescription"></p>
+            <div class="row" style="margin-bottom:8px"><strong>Монстры</strong><div id="locationActions"></div></div>
+            <div id="monsterList" class="cards"></div>
+            <h3>Инвентарь</h3>
+            <div id="inventoryList" class="cards"></div>
+            <h3>Сундук (только первая улица)</h3>
+            <div class="row"><button id="chestToggleBtn" class="btn secondary" onclick="toggleChest()">Открыть сундук</button></div>
+            <div id="chestWrap" style="display:none;margin-top:8px"><div id="chestList" class="cards"></div></div>
+        </section>
+
+        <section id="panel-skills" class="screen">
+            <h2>Умения класса</h2>
+            <div id="skillList" class="cards"></div>
+        </section>
+
+        <section id="panel-character" class="screen">
+            <h2>Персонаж</h2>
+            <div class="row" style="margin-bottom:8px"><img src="https://placehold.co/120x120" alt="hero"></div>
+            <div class="equip-grid" id="equipmentSlots"></div>
+        </section>
+    </main>
+</div>
+
+<div id="battleOverlay" class="battle-overlay">
+    <div class="panel battle-box">
+        <h2 id="battleTitle">Бой</h2>
+        <p id="battleInfo" class="small"></p>
+        <div class="bars">
+            <div class="small">Игрок HP <span id="battlePlayerHp"></span></div><div class="bar"><div id="battlePlayerBar" class="fill hp"></div></div>
+            <div class="small">Монстр HP <span id="battleMonsterHp"></span></div><div class="bar"><div id="battleMonsterBar" class="fill mana"></div></div>
+            <div class="small">Ход: <span id="battleTimer">10</span> сек</div>
+        </div>
+        <div class="row" style="margin-top:10px">
+            <button class="btn" onclick="battleAction('attack')">Атака</button>
+            <button class="btn secondary" onclick="battleAction('skill')">Умение</button>
+            <button class="btn secondary" onclick="battleAction('wait')">Ждать</button>
+        </div>
+        <div id="battleLog" class="small" style="margin-top:10px;max-height:160px;overflow:auto"></div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
