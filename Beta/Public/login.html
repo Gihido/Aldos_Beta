@@ -1,86 +1,10 @@
 <!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Вход</title>
-    <style>
-        :root{
-            --bg:#f5f2eb;
-            --panel:#fffaf2;
-            --panel2:#f7efe2;
-            --line:#d8cbbc;
-            --text:#3b3128;
-            --muted:#7a6b5f;
-            --accent:#d9863b;
-            --accent-dark:#b96b28;
-            --shadow:0 12px 30px rgba(92,67,43,.1);
-        }
-        *{box-sizing:border-box}
-        body{
-            margin:0;
-            min-height:100vh;
-            font-family:Arial,sans-serif;
-            color:var(--text);
-            background:
-                radial-gradient(circle at top left, rgba(217,134,59,.08), transparent 24%),
-                radial-gradient(circle at bottom right, rgba(120,120,120,.06), transparent 28%),
-                linear-gradient(180deg, #f8f5ef 0%, #f1ece4 100%);
-            display:grid;
-            place-items:center;
-            padding:20px;
-        }
-        .card{
-            width:min(100%, 520px);
-            background:linear-gradient(180deg,var(--panel),var(--panel2));
-            border:1px solid var(--line);
-            box-shadow:var(--shadow);
-            border-radius:28px;
-            padding:28px;
-        }
-        .title{text-align:center;margin:0 0 8px;font-size:36px}
-        .sub{text-align:center;color:var(--muted);margin-bottom:22px}
-        .input{
-            width:100%;
-            padding:15px 16px;
-            border-radius:14px;
-            border:1px solid var(--line);
-            background:#fff;
-            font-size:16px;
-            margin-bottom:12px;
-        }
-        .btn{
-            width:100%;
-            padding:15px;
-            border:none;
-            border-radius:14px;
-            cursor:pointer;
-            font-weight:700;
-            font-size:16px;
-            color:#fff;
-            background:linear-gradient(135deg,var(--accent),var(--accent-dark));
-        }
-        .msg{text-align:center;color:var(--muted);margin-top:12px}
-        .msg a{
-            color:var(--accent-dark);
-            text-decoration:none;
-            font-weight:700;
-        }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h1 class="title">Вход в игру</h1>
-        <div class="sub">Продолжи приключение</div>
-
-        <input class="input" id="username" type="text" placeholder="Логин">
-        <input class="input" id="password" type="password" placeholder="Пароль">
-
-        <button class="btn" onclick="loginUser()">Войти</button>
-        <div id="message" class="msg"></div>
-        <div class="msg">Нет аккаунта? <a href="register.html">Регистрация</a></div>
-    </div>
-
-    <script src="app.js"></script>
-</body>
-</html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Вход</title>
+<style>
+:root{--a:#f09a45;--a2:#cf7531}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Segoe UI,Arial;background:radial-gradient(circle at top,#62594f,#221f1b 70%);color:#fff}
+.card{width:min(480px,92%);background:linear-gradient(180deg,#4d4640,#5d544c);border:1px solid #8c7f72;border-radius:22px;padding:22px;box-shadow:0 20px 40px rgba(0,0,0,.35);animation:up .45s ease}@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.input{width:100%;padding:13px;border-radius:12px;border:1px solid #988779;background:#2f2a26;color:#fff;margin-bottom:10px}
+.btn{width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--a),var(--a2));font-weight:700;cursor:pointer}.msg{margin-top:10px;color:#d7c8b7}
+</style></head>
+<body><div class="card"><h1>Вход в игру</h1><p class="msg">Продолжи приключение</p><input id="username" class="input" placeholder="Логин"><input id="password" type="password" class="input" placeholder="Пароль"><button class="btn" onclick="loginUser()">Войти</button><div id="message" class="msg"></div><div class="msg">Нет аккаунта? <a href="register.html" style="color:#ffd6ac">Регистрация</a></div></div><script src="app.js"></script></body></html>
