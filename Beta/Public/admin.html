@@ -1,18 +1,38 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <title>Админ панель</title>
-    <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ панель</title>
+  <style>
+    body{margin:0;font-family:Segoe UI,Arial;background:#221f1b;color:#f4efe8}
+    .wrap{max-width:1200px;margin:16px auto;padding:0 10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+    .card{background:#4b433d;border:1px solid #7f7468;border-radius:12px;padding:10px}
+    input,select,textarea,button{width:100%;margin-top:6px;padding:9px;border-radius:8px;border:1px solid #8b7d70}
+    button{background:#f09a45;color:#2b1607;font-weight:700;cursor:pointer;border:0}
+    .item-card{background:#3b342f;border:1px solid #6f6459;border-radius:10px;padding:8px;margin-top:6px}
+    .small{font-size:12px;color:#d0c2b4}
+  </style>
 </head>
 <body onload="loadUsers()">
-    <div class="container">
-        <h2>Админ-панель</h2>
-        <div id="adminMessage" class="message"></div>
-        <div id="userList" class="user-list"></div>
-        <button onclick="logout()">Выйти</button>
+  <div class="wrap">
+    <h2>Админ-панель Gihido</h2>
+    <div class="grid">
+      <div class="card"><h3>Игроки</h3><div id="userList"></div></div>
+      <div class="card"><h3>Локации</h3><form id="locationForm"><input name="code" placeholder="code" required><input name="name" placeholder="Название" required><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки" required><input name="next_code" placeholder="next code"><input name="prev_code" placeholder="prev code"><button type="button" onclick="adminCreate('location','locationForm')">Создать</button></form><div id="locationsList"></div></div>
+      <div class="card"><h3>Монстры</h3><form id="monsterForm"><input name="code" placeholder="code" required><input name="location_code" placeholder="location code" required><input name="name" placeholder="Название" required><input name="hp" type="number" placeholder="HP" required><input name="min_damage" type="number" placeholder="Min dmg" required><input name="max_damage" type="number" placeholder="Max dmg" required><input name="image_url" placeholder="URL картинки" required><button type="button" onclick="adminCreate('monster','monsterForm')">Создать</button></form><div id="monstersList"></div></div>
+      <div class="card"><h3>Лут монстров</h3><form id="lootForm"><input name="monster_id" type="number" placeholder="monster id" required><input name="name" placeholder="Название" required><input name="item_type" placeholder="weapon/armor/consumable" required><input name="equip_slot" placeholder="slot"><input name="min_damage" type="number" placeholder="min dmg"><input name="max_damage" type="number" placeholder="max dmg"><input name="armor" type="number" placeholder="armor"><input name="heal_hp" type="number" placeholder="heal hp"><input name="heal_mana" type="number" placeholder="heal mana"><input name="weight" type="number" placeholder="weight"><input name="chance" type="number" placeholder="chance %"><textarea name="description" placeholder="Описание"></textarea><button type="button" onclick="adminCreate('loot','lootForm')">Создать</button></form><div id="lootList"></div></div>
+      <div class="card"><h3>Умения</h3><form id="skillForm"><input name="code" placeholder="code" required><input name="name" placeholder="Название" required><textarea name="description" placeholder="Описание"></textarea><input name="class_code" placeholder="archer/mage/orc" required><input name="power" type="number" placeholder="power"><input name="mana_cost" type="number" placeholder="mana cost"><input name="effect_type" placeholder="stun/block/crit_boost/none"><input name="effect_chance" type="number" placeholder="effect chance"><button type="button" onclick="adminCreate('skill','skillForm')">Создать</button></form><div id="skillsList"></div></div>
+      <div class="card"><h3>Вещи + выдача</h3><form id="itemForm"><input name="name" placeholder="Название" required><input name="item_type" placeholder="weapon/armor/consumable" required><input name="equip_slot" placeholder="slot"><input name="min_damage" type="number" placeholder="min dmg"><input name="max_damage" type="number" placeholder="max dmg"><input name="armor" type="number" placeholder="armor"><input name="heal_hp" type="number" placeholder="heal hp"><input name="heal_mana" type="number" placeholder="heal mana"><input name="weight" type="number" placeholder="weight"><textarea name="description" placeholder="Описание"></textarea><button type="button" onclick="adminCreate('item','itemForm')">Создать шаблон</button></form>
+      <hr>
+      <label>Дать умение игроку</label><select id="grantUser"></select><select id="grantSkill"></select><label><input id="grantEquip" type="checkbox"> экипировать сразу</label><button type="button" onclick="adminGrantSkill()">Выдать умение</button>
+      <hr>
+      <label>Дать вещь игроку</label><select id="giveUser"></select><select id="giveItem"></select><select id="giveStorage"><option value="inventory">В инвентарь</option><option value="chest">В сундук</option></select><button type="button" onclick="adminGiveItem()">Выдать вещь</button>
+      <div id="itemsList"></div></div>
     </div>
-
-    <script src="app.js"></script>
+    <button onclick="logout()">Выйти</button>
+  </div>
+  <script src="app.js"></script>
 </body>
 </html>
