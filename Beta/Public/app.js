@@ -21,6 +21,7 @@ const slotRu = { head: "Голова", body: "Тело", right_hand: "Права
 const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 const chance = p => Math.random() * 100 < p;
 const sumWeight = arr => arr.reduce((s, i) => s + (Number(i.weight) || 0), 0);
+const adminState = { locations: [], monsters: [], loot: [], skills: [], items: [], selected: { locationId: null, monsterId: null, lootId: null, skillId: null, itemId: null } };
 
 async function api(url, method = "GET", body) {
   const res = await fetch(url, {
@@ -189,11 +190,13 @@ function moveLocation(code) {
 function renderMonsters() {
   const list = document.getElementById('monsterList');
   const monsters = gameState.monsters[gameState.player.current_location] || [];
-  list.innerHTML = monsters.map(m => {
+  list.innerHTML = monsters.map((m, idx) => {
     const deadUntil = gameState.respawns[m.id] || 0;
     const dead = Date.now() < deadUntil;
     const sec = Math.max(0, Math.ceil((deadUntil - Date.now()) / 1000));
-    return `<div class='monster-card'><div class='monster-image' style="background-image:url('${m.image}')"></div><div class='row'><strong>${m.name}</strong><span class='small'>HP ${m.hp}</span></div><div class='small'>Атака ${m.minDamage}-${m.maxDamage}</div><button class='btn' ${dead ? 'disabled' : ''} onclick="startBattle('${m.id}')">${dead ? `Возрождение ${sec}с` : 'Атаковать'}</button></div>`;
+    const show = chance(Number(m.spawn_chance ?? 100));
+    if (!show) return '';
+    return `<div class='monster-card' style='animation-delay:${idx * 120}ms'><div class='monster-image' style="background-image:url('${m.image}')"></div><div class='row'><strong>${m.name}</strong><span class='small'>HP ${m.hp}</span></div><div class='small'>Атака ${m.minDamage}-${m.maxDamage} • Шанс: ${m.spawn_chance ?? 100}%</div><button class='btn' ${dead ? 'disabled' : ''} onclick="startBattle('${m.id}')">${dead ? `Возрождение ${sec}с` : 'Атаковать'}</button></div>`;
   }).join('');
 }
 
@@ -446,10 +449,28 @@ function updateBattleUI() {
   renderBars();
 }
 
-function fileToDataUrl(file, cb) {
-  if (!file) return cb('');
+function createAutoImage(title, tone = '#f09a45') {
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='512' height='320'><defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'><stop stop-color='${tone}'/><stop offset='1' stop-color='#2d2a27'/></linearGradient></defs><rect width='100%' height='100%' fill='url(#g)'/><circle cx='420' cy='65' r='35' fill='rgba(255,255,255,.22)'/><text x='28' y='168' font-size='34' font-family='Arial' fill='white'>${String(title || 'RPG').slice(0, 18)}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
+function fileToDataUrl(file, fallbackTitle, cb) {
+  if (!file) return cb(createAutoImage(fallbackTitle));
   const reader = new FileReader();
-  reader.onload = () => cb(reader.result);
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const maxW = 900;
+      const scale = Math.min(1, maxW / img.width);
+      canvas.width = Math.floor(img.width * scale);
+      canvas.height = Math.floor(img.height * scale);
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      cb(canvas.toDataURL('image/jpeg', 0.85));
+    };
+    img.src = reader.result;
+  };
   reader.readAsDataURL(file);
 }
 
@@ -463,6 +484,11 @@ async function loadAdminAll() {
   const usersArr = users.users || [];
   const skillsArr = skills.skills || [];
   const itemsArr = items.items || [];
+  adminState.locations = locations.locations || [];
+  adminState.monsters = monsters.monsters || [];
+  adminState.loot = loot.loot || [];
+  adminState.skills = skillsArr;
+  adminState.items = itemsArr;
 
   document.getElementById('playerSelect').innerHTML = usersArr.map(u => `<option value='${u.id}'>${u.username} ${u.is_blocked ? '(заблокирован)' : ''}</option>`).join('');
   document.getElementById('playerInfo').innerHTML = usersArr.map(u => `<div class='item-card'><b>${u.username}</b><div class='small'>${u.role} | ${u.class_code}</div><div class='small'>Бан: ${u.is_blocked ? u.ban_reason : 'нет'}</div></div>`).join('');
@@ -470,11 +496,11 @@ async function loadAdminAll() {
   document.getElementById('actionItem').innerHTML = itemsArr.map(i => `<option value='${i.id}'>${i.name}</option>`).join('');
   document.getElementById('actionSkill').innerHTML = skillsArr.map(s => `<option value='${s.id}'>${s.name}</option>`).join('');
 
-  document.getElementById('locationsList').innerHTML = (locations.locations || []).map(l => `<div class='item-card'><b>${l.name}</b><div class='small'>${l.code} | next:${l.next_code || '-'} | prev:${l.prev_code || '-'}</div></div>`).join('');
-  document.getElementById('monstersList').innerHTML = (monsters.monsters || []).map(m => `<div class='item-card'><b>${m.name}</b><div class='small'>${m.code} (${m.location_code}) HP:${m.hp}</div></div>`).join('');
-  document.getElementById('lootList').innerHTML = (loot.loot || []).map(l => `<div class='item-card'><b>${l.name}</b><div class='small'>${l.monster_name} | ${l.chance}%</div></div>`).join('');
-  document.getElementById('skillsList').innerHTML = skillsArr.map(s => `<div class='item-card'><b>${s.name}</b><div class='small'>${s.class_code} | mana:${s.mana_cost} | cd:${s.cooldown_turns}</div></div>`).join('');
-  document.getElementById('itemsList').innerHTML = itemsArr.map(i => `<div class='item-card'><b>${i.name}</b><div class='small'>${i.item_type}</div></div>`).join('');
+  document.getElementById('locationsList').innerHTML = adminState.locations.map(l => `<div class='item-card' onclick='pickEntity(\"location\",${l.id})'><b>${l.name}</b><div class='small'>${l.code} | next:${l.next_code || '-'} | prev:${l.prev_code || '-'}</div></div>`).join('');
+  document.getElementById('monstersList').innerHTML = adminState.monsters.map(m => `<div class='item-card' onclick='pickEntity(\"monster\",${m.id})'><b>${m.name}</b><div class='small'>${m.code} (${m.location_code}) HP:${m.hp} шанс:${m.spawn_chance}%</div></div>`).join('');
+  document.getElementById('lootList').innerHTML = adminState.loot.map(l => `<div class='item-card' onclick='pickEntity(\"loot\",${l.id})'><b>${l.name}</b><div class='small'>${l.monster_name} | ${l.chance}%</div></div>`).join('');
+  document.getElementById('skillsList').innerHTML = skillsArr.map(s => `<div class='item-card' onclick='pickEntity(\"skill\",${s.id})'><b>${s.name}</b><div class='small'>${s.class_code} | mana:${s.mana_cost} | cd:${s.cooldown_turns}</div></div>`).join('');
+  document.getElementById('itemsList').innerHTML = itemsArr.map(i => `<div class='item-card' onclick='pickEntity(\"item\",${i.id})'><b>${i.name}</b><div class='small'>${i.item_type} ${i.code ? `| код:${i.code}` : ''}</div></div>`).join('');
 }
 
 async function adminPlayerAction(action) {
@@ -497,10 +523,59 @@ function formData(formId) {
 async function submitWithImage(formId, fileInputId, endpoint) {
   const data = formData(formId);
   const file = document.getElementById(fileInputId)?.files?.[0];
-  fileToDataUrl(file, async (img) => {
-    data.image_url = img || data.image_url || '';
-    await api(endpoint, 'POST', data);
+  fileToDataUrl(file, data.name || data.code || 'RPG', async (img) => {
+    data.image_url = data.image_url || img;
+    const method = data.id ? 'PUT' : 'POST';
+    const finalEndpoint = data.id ? `${endpoint}/${data.id}` : endpoint;
+    await api(finalEndpoint, method, data);
     document.getElementById(formId).reset();
+    if (formId === 'locationForm') document.getElementById('locationId').value = '';
+    if (formId === 'monsterForm') document.getElementById('monsterId').value = '';
+    if (formId === 'lootForm') document.getElementById('lootId').value = '';
+    if (formId === 'skillForm') document.getElementById('skillId').value = '';
+    if (formId === 'itemForm') document.getElementById('itemId').value = '';
     await loadAdminAll();
   });
+}
+
+function fillForm(formId, data) {
+  const form = document.getElementById(formId);
+  if (!form || !data) return;
+  Object.keys(data).forEach(k => {
+    const el = form.querySelector(`[name='${k}']`);
+    if (el) el.value = data[k] ?? '';
+  });
+}
+
+function pickEntity(type, id) {
+  if (type === 'location') {
+    const row = adminState.locations.find(x => x.id === id);
+    if (!row) return;
+    document.getElementById('locationId').value = row.id;
+    fillForm('locationForm', row);
+  }
+  if (type === 'monster') {
+    const row = adminState.monsters.find(x => x.id === id);
+    if (!row) return;
+    document.getElementById('monsterId').value = row.id;
+    fillForm('monsterForm', row);
+  }
+  if (type === 'loot') {
+    const row = adminState.loot.find(x => x.id === id);
+    if (!row) return;
+    document.getElementById('lootId').value = row.id;
+    fillForm('lootForm', row);
+  }
+  if (type === 'skill') {
+    const row = adminState.skills.find(x => x.id === id);
+    if (!row) return;
+    document.getElementById('skillId').value = row.id;
+    fillForm('skillForm', row);
+  }
+  if (type === 'item') {
+    const row = adminState.items.find(x => x.id === id);
+    if (!row) return;
+    document.getElementById('itemId').value = row.id;
+    fillForm('itemForm', row);
+  }
 }

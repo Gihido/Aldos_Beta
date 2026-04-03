@@ -113,10 +113,10 @@ async function seedWorld() {
 
   const monsters = await all(`SELECT * FROM monsters`);
   if (!monsters.length) {
-    await run(`INSERT INTO monsters (code, location_code, name, hp, max_mana, min_damage, max_damage, image_url) VALUES
-      ('rat','street_lanterns','Гигантская крыса',45,0,2,5,'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?q=80&w=1200&auto=format&fit=crop'),
-      ('skeleton','old_square','Скелет-воин',78,0,5,9,'https://images.unsplash.com/photo-1638828844123-4517ad0cf90e?q=80&w=1200&auto=format&fit=crop'),
-      ('ogre','dark_gate','Огр-хранитель',110,0,6,12,'https://images.unsplash.com/photo-1518709268805-4e9042af2176?q=80&w=1200&auto=format&fit=crop')`);
+    await run(`INSERT INTO monsters (code, location_code, name, hp, max_mana, min_damage, max_damage, spawn_chance, image_url) VALUES
+      ('rat','street_lanterns','Гигантская крыса',45,0,2,5,100,'https://images.unsplash.com/photo-1582555172866-f73bb12a2ab3?q=80&w=1200&auto=format&fit=crop'),
+      ('skeleton','old_square','Скелет-воин',78,0,5,9,100,'https://images.unsplash.com/photo-1638828844123-4517ad0cf90e?q=80&w=1200&auto=format&fit=crop'),
+      ('ogre','dark_gate','Огр-хранитель',110,0,6,12,100,'https://images.unsplash.com/photo-1518709268805-4e9042af2176?q=80&w=1200&auto=format&fit=crop')`);
     const ratId = (await get(`SELECT id FROM monsters WHERE code='rat'`)).id;
     const skId = (await get(`SELECT id FROM monsters WHERE code='skeleton'`)).id;
     const ogreId = (await get(`SELECT id FROM monsters WHERE code='ogre'`)).id;
@@ -133,19 +133,21 @@ async function initDb() {
   await run(`CREATE TABLE IF NOT EXISTS equipment (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, slot_code TEXT NOT NULL, item_id INTEGER, UNIQUE(user_id, slot_code))`);
   await run(`CREATE TABLE IF NOT EXISTS inventory_items (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, name TEXT NOT NULL, item_type TEXT NOT NULL, equip_slot TEXT, min_damage INTEGER NOT NULL DEFAULT 0, max_damage INTEGER NOT NULL DEFAULT 0, armor INTEGER NOT NULL DEFAULT 0, heal_hp INTEGER NOT NULL DEFAULT 0, heal_mana INTEGER NOT NULL DEFAULT 0, weight INTEGER NOT NULL DEFAULT 1, description TEXT NOT NULL DEFAULT '', image_url TEXT NOT NULL DEFAULT '', storage TEXT NOT NULL DEFAULT 'inventory', quantity INTEGER NOT NULL DEFAULT 1)`);
   await run(`CREATE TABLE IF NOT EXISTS locations (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE NOT NULL, name TEXT NOT NULL, description TEXT NOT NULL, image_url TEXT NOT NULL, next_code TEXT, prev_code TEXT)`);
-  await run(`CREATE TABLE IF NOT EXISTS monsters (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE NOT NULL, location_code TEXT NOT NULL, name TEXT NOT NULL, hp INTEGER NOT NULL, max_mana INTEGER NOT NULL DEFAULT 0, min_damage INTEGER NOT NULL, max_damage INTEGER NOT NULL, image_url TEXT NOT NULL)`);
+  await run(`CREATE TABLE IF NOT EXISTS monsters (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE NOT NULL, location_code TEXT NOT NULL, name TEXT NOT NULL, hp INTEGER NOT NULL, max_mana INTEGER NOT NULL DEFAULT 0, min_damage INTEGER NOT NULL, max_damage INTEGER NOT NULL, spawn_chance REAL NOT NULL DEFAULT 100, image_url TEXT NOT NULL)`);
   await run(`CREATE TABLE IF NOT EXISTS monster_loot (id INTEGER PRIMARY KEY AUTOINCREMENT, monster_id INTEGER NOT NULL, name TEXT NOT NULL, item_type TEXT NOT NULL, equip_slot TEXT, min_damage INTEGER DEFAULT 0, max_damage INTEGER DEFAULT 0, armor INTEGER DEFAULT 0, heal_hp INTEGER DEFAULT 0, heal_mana INTEGER DEFAULT 0, weight INTEGER DEFAULT 1, description TEXT DEFAULT '', chance REAL NOT NULL DEFAULT 10, image_url TEXT NOT NULL DEFAULT '')`);
   await run(`CREATE TABLE IF NOT EXISTS skills (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE NOT NULL, name TEXT NOT NULL, description TEXT NOT NULL, class_code TEXT NOT NULL DEFAULT 'archer', power INTEGER NOT NULL DEFAULT 0, mana_cost INTEGER NOT NULL DEFAULT 0, effect_type TEXT NOT NULL DEFAULT 'none', effect_chance REAL NOT NULL DEFAULT 0, cooldown_turns INTEGER NOT NULL DEFAULT 0, image_url TEXT NOT NULL DEFAULT '')`);
   await run(`CREATE TABLE IF NOT EXISTS user_skills (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER NOT NULL, skill_id INTEGER NOT NULL, is_equipped INTEGER NOT NULL DEFAULT 0, UNIQUE(user_id, skill_id))`);
-  await run(`CREATE TABLE IF NOT EXISTS item_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL, item_type TEXT NOT NULL, equip_slot TEXT, min_damage INTEGER DEFAULT 0, max_damage INTEGER DEFAULT 0, armor INTEGER DEFAULT 0, heal_hp INTEGER DEFAULT 0, heal_mana INTEGER DEFAULT 0, weight INTEGER DEFAULT 1, description TEXT DEFAULT '', image_url TEXT NOT NULL DEFAULT '')`);
+  await run(`CREATE TABLE IF NOT EXISTS item_templates (id INTEGER PRIMARY KEY AUTOINCREMENT, code TEXT UNIQUE, name TEXT NOT NULL, item_type TEXT NOT NULL, equip_slot TEXT, min_damage INTEGER DEFAULT 0, max_damage INTEGER DEFAULT 0, armor INTEGER DEFAULT 0, heal_hp INTEGER DEFAULT 0, heal_mana INTEGER DEFAULT 0, weight INTEGER DEFAULT 1, description TEXT DEFAULT '', image_url TEXT NOT NULL DEFAULT '')`);
 
   await ensureColumn("users", "ban_reason", `ALTER TABLE users ADD COLUMN ban_reason TEXT NOT NULL DEFAULT ''`);
   await ensureColumn("inventory_items", "image_url", `ALTER TABLE inventory_items ADD COLUMN image_url TEXT NOT NULL DEFAULT ''`);
   await ensureColumn("monsters", "max_mana", `ALTER TABLE monsters ADD COLUMN max_mana INTEGER NOT NULL DEFAULT 0`);
+  await ensureColumn("monsters", "spawn_chance", `ALTER TABLE monsters ADD COLUMN spawn_chance REAL NOT NULL DEFAULT 100`);
   await ensureColumn("monster_loot", "image_url", `ALTER TABLE monster_loot ADD COLUMN image_url TEXT NOT NULL DEFAULT ''`);
   await ensureColumn("skills", "cooldown_turns", `ALTER TABLE skills ADD COLUMN cooldown_turns INTEGER NOT NULL DEFAULT 0`);
   await ensureColumn("skills", "image_url", `ALTER TABLE skills ADD COLUMN image_url TEXT NOT NULL DEFAULT ''`);
   await ensureColumn("item_templates", "image_url", `ALTER TABLE item_templates ADD COLUMN image_url TEXT NOT NULL DEFAULT ''`);
+  await ensureColumn("item_templates", "code", `ALTER TABLE item_templates ADD COLUMN code TEXT`);
 
   await seedWorld();
 
@@ -234,6 +236,7 @@ app.get("/api/game-data", requireAuth, async (req, res) => {
       max_mana: m.max_mana,
       minDamage: m.min_damage,
       maxDamage: m.max_damage,
+      spawn_chance: m.spawn_chance,
       image: m.image_url,
       location_code: m.location_code,
       loot: (lootByMonster[m.id] || []).map(l => ({
@@ -372,13 +375,15 @@ app.put("/api/admin/locations/:id", requireAuth, requireAdmin, async (req, res) 
 
 app.get("/api/admin/monsters", requireAuth, requireAdmin, async (req, res) => res.json({ success: true, monsters: await all(`SELECT * FROM monsters ORDER BY id ASC`) }));
 app.post("/api/admin/monsters", requireAuth, requireAdmin, async (req, res) => {
-  const { code, location_code, name, hp, max_mana, min_damage, max_damage, image_url } = req.body;
-  await run(`INSERT INTO monsters (code, location_code, name, hp, max_mana, min_damage, max_damage, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`, [code, location_code, name, hp, max_mana || 0, min_damage, max_damage, image_url]);
+  const { code, location_code, name, hp, max_mana, min_damage, max_damage, spawn_chance, image_url } = req.body;
+  const count = await get(`SELECT COUNT(*) as c FROM monsters WHERE location_code = ?`, [location_code]);
+  if (Number(count.c) >= 5) return res.json({ success: false, message: "В одной локации максимум 5 монстров" });
+  await run(`INSERT INTO monsters (code, location_code, name, hp, max_mana, min_damage, max_damage, spawn_chance, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`, [code, location_code, name, hp, max_mana || 0, min_damage, max_damage, spawn_chance || 100, image_url]);
   res.json({ success: true });
 });
 app.put("/api/admin/monsters/:id", requireAuth, requireAdmin, async (req, res) => {
-  const { code, location_code, name, hp, max_mana, min_damage, max_damage, image_url } = req.body;
-  await run(`UPDATE monsters SET code=?, location_code=?, name=?, hp=?, max_mana=?, min_damage=?, max_damage=?, image_url=? WHERE id=?`, [code, location_code, name, hp, max_mana || 0, min_damage, max_damage, image_url, req.params.id]);
+  const { code, location_code, name, hp, max_mana, min_damage, max_damage, spawn_chance, image_url } = req.body;
+  await run(`UPDATE monsters SET code=?, location_code=?, name=?, hp=?, max_mana=?, min_damage=?, max_damage=?, spawn_chance=?, image_url=? WHERE id=?`, [code, location_code, name, hp, max_mana || 0, min_damage, max_damage, spawn_chance || 100, image_url, req.params.id]);
   res.json({ success: true });
 });
 
@@ -408,8 +413,13 @@ app.put("/api/admin/skills/:id", requireAuth, requireAdmin, async (req, res) => 
 
 app.get("/api/admin/items", requireAuth, requireAdmin, async (req, res) => res.json({ success: true, items: await all(`SELECT * FROM item_templates ORDER BY id ASC`) }));
 app.post("/api/admin/items", requireAuth, requireAdmin, async (req, res) => {
-  const { name, item_type, equip_slot, min_damage, max_damage, armor, heal_hp, heal_mana, weight, description, image_url } = req.body;
-  await run(`INSERT INTO item_templates (name, item_type, equip_slot, min_damage, max_damage, armor, heal_hp, heal_mana, weight, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [name, item_type, equip_slot || null, min_damage || 0, max_damage || 0, armor || 0, heal_hp || 0, heal_mana || 0, weight || 1, description || "", image_url || ""]);
+  const { code, name, item_type, equip_slot, min_damage, max_damage, armor, heal_hp, heal_mana, weight, description, image_url } = req.body;
+  await run(`INSERT INTO item_templates (code, name, item_type, equip_slot, min_damage, max_damage, armor, heal_hp, heal_mana, weight, description, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [code || null, name, item_type, equip_slot || null, min_damage || 0, max_damage || 0, armor || 0, heal_hp || 0, heal_mana || 0, weight || 1, description || "", image_url || ""]);
+  res.json({ success: true });
+});
+app.put("/api/admin/items/:id", requireAuth, requireAdmin, async (req, res) => {
+  const { code, name, item_type, equip_slot, min_damage, max_damage, armor, heal_hp, heal_mana, weight, description, image_url } = req.body;
+  await run(`UPDATE item_templates SET code=?, name=?, item_type=?, equip_slot=?, min_damage=?, max_damage=?, armor=?, heal_hp=?, heal_mana=?, weight=?, description=?, image_url=? WHERE id=?`, [code || null, name, item_type, equip_slot || null, min_damage || 0, max_damage || 0, armor || 0, heal_hp || 0, heal_mana || 0, weight || 1, description || "", image_url || "", req.params.id]);
   res.json({ success: true });
 });
 

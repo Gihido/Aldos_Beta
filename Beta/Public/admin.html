@@ -38,6 +38,7 @@
       <div class="card">
         <h3>Локации</h3>
         <form id="locationForm">
+          <input id="locationId" name="id" type="hidden">
           <input name="code" placeholder="code" required>
           <input name="name" placeholder="Название" required>
           <textarea name="description" placeholder="Описание"></textarea>
@@ -45,7 +46,7 @@
           <input id="locationImage" type="file" accept="image/*">
           <input name="next_code" placeholder="next code">
           <input name="prev_code" placeholder="prev code">
-          <button type="button" onclick="submitWithImage('locationForm','locationImage','/api/admin/locations')">Создать локацию</button>
+          <button type="button" onclick="submitWithImage('locationForm','locationImage','/api/admin/locations')">Создать / обновить локацию</button>
         </form>
         <div id="locationsList"></div>
       </div>
@@ -53,6 +54,7 @@
       <div class="card">
         <h3>Монстры</h3>
         <form id="monsterForm">
+          <input id="monsterId" name="id" type="hidden">
           <input name="code" placeholder="code" required>
           <input name="location_code" placeholder="location code" required>
           <input name="name" placeholder="Название" required>
@@ -60,9 +62,10 @@
           <input name="max_mana" type="number" placeholder="Mana" value="0">
           <input name="min_damage" type="number" placeholder="Min dmg" required>
           <input name="max_damage" type="number" placeholder="Max dmg" required>
+          <input name="spawn_chance" type="number" placeholder="Шанс появления %" value="100">
           <input name="image_url" placeholder="или URL картинки">
           <input id="monsterImage" type="file" accept="image/*">
-          <button type="button" onclick="submitWithImage('monsterForm','monsterImage','/api/admin/monsters')">Создать монстра</button>
+          <button type="button" onclick="submitWithImage('monsterForm','monsterImage','/api/admin/monsters')">Создать / обновить монстра</button>
         </form>
         <div id="monstersList"></div>
       </div>
@@ -70,6 +73,7 @@
       <div class="card">
         <h3>Лут монстров</h3>
         <form id="lootForm">
+          <input id="lootId" name="id" type="hidden">
           <input name="monster_id" type="number" placeholder="monster id" required>
           <input name="name" placeholder="Название" required>
           <input name="item_type" placeholder="weapon/armor/consumable" required>
@@ -84,7 +88,7 @@
           <textarea name="description" placeholder="Описание"></textarea>
           <input name="image_url" placeholder="или URL картинки">
           <input id="lootImage" type="file" accept="image/*">
-          <button type="button" onclick="submitWithImage('lootForm','lootImage','/api/admin/loot')">Создать лут</button>
+          <button type="button" onclick="submitWithImage('lootForm','lootImage','/api/admin/loot')">Создать / обновить лут</button>
         </form>
         <div id="lootList"></div>
       </div>
@@ -92,6 +96,7 @@
       <div class="card">
         <h3>Умения</h3>
         <form id="skillForm">
+          <input id="skillId" name="id" type="hidden">
           <input name="code" placeholder="code" required>
           <input name="name" placeholder="Название" required>
           <textarea name="description" placeholder="Описание"></textarea>
@@ -103,7 +108,7 @@
           <input name="cooldown_turns" type="number" placeholder="перезарядка в ходах">
           <input name="image_url" placeholder="или URL картинки">
           <input id="skillImage" type="file" accept="image/*">
-          <button type="button" onclick="submitWithImage('skillForm','skillImage','/api/admin/skills')">Создать умение</button>
+          <button type="button" onclick="submitWithImage('skillForm','skillImage','/api/admin/skills')">Создать / обновить умение</button>
         </form>
         <div id="skillsList"></div>
       </div>
@@ -111,6 +116,8 @@
       <div class="card">
         <h3>Шаблоны вещей</h3>
         <form id="itemForm">
+          <input id="itemId" name="id" type="hidden">
+          <input name="code" placeholder="Код вещи (уникальный)">
           <input name="name" placeholder="Название" required>
           <input name="item_type" placeholder="weapon/armor/consumable" required>
           <input name="equip_slot" placeholder="slot">
@@ -123,7 +130,7 @@
           <textarea name="description" placeholder="Описание"></textarea>
           <input name="image_url" placeholder="или URL картинки">
           <input id="itemImage" type="file" accept="image/*">
-          <button type="button" onclick="submitWithImage('itemForm','itemImage','/api/admin/items')">Создать шаблон</button>
+          <button type="button" onclick="submitWithImage('itemForm','itemImage','/api/admin/items')">Создать / обновить шаблон</button>
         </form>
         <div id="itemsList"></div>
       </div>
