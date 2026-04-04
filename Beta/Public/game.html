@@ -28,12 +28,15 @@
     .monster-image{height:80px;background-size:cover;background-position:center;border:1px solid #aaa;margin-bottom:6px}
     .item-top{display:flex;gap:8px}.thumb{width:52px;height:52px;border:1px solid #999;display:grid;place-items:center;overflow:hidden}
 
-    .battle-overlay,.travel-overlay,.skill-chooser,.result-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:10px;z-index:20}
-    .battle-overlay.open,.travel-overlay.open,.skill-chooser.open,.result-overlay.open{display:flex}
+    .battle-overlay,.travel-overlay,.skill-chooser,.result-overlay,.equip-chooser{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:10px;z-index:20}
+    .battle-overlay.open,.travel-overlay.open,.skill-chooser.open,.result-overlay.open,.equip-chooser.open{display:flex}
     .battle-box,.chooser-box,.result-box,.travel-box{width:min(980px,100%);background:#05090f;border:2px solid #2f95e6;color:#fff;padding:10px}
     .battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.fighter{border:1px solid #777;padding:8px}.fighter img{width:100%;height:150px;object-fit:cover}
     .log{max-height:130px;overflow:auto;border:1px solid #555;padding:8px;margin-top:10px;background:#171717}
-    .equip-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:10px}.slot{background:#fff;border:1px solid #999;padding:8px;color:#111}
+    .equip-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:10px}.slot{background:#fff;border:1px solid #999;padding:8px;color:#111;cursor:pointer}
+    .slot:hover{outline:2px solid #ff9800}
+    .toast-wrap{position:fixed;right:12px;top:12px;z-index:60;display:grid;gap:8px}.toast{background:#25272c;color:#fff;padding:10px 12px;border-left:4px solid #ff9800;min-width:220px;animation:fadein .2s ease}
+    @keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
     .travel-way{height:16px;border:1px solid #666;background:#222}.travel-progress{height:100%;background:#2f95e6;width:0}
 
     @media(max-width:900px){.app,.app.sidebar-collapsed{grid-template-columns:1fr}.sidebar{height:auto;position:sticky;top:0;z-index:3}.battle-grid{grid-template-columns:1fr}.equip-grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
@@ -76,7 +79,7 @@
     <section id="panel-inventory" class="screen"><div class="location-box"><h2>Сумка</h2><div id="inventoryList" class="cards"></div></div></section>
     <section id="panel-chest" class="screen"><div class="location-box"><h2>Сундук</h2><div id="chestState" class="small"></div><div id="chestList" class="cards"></div></div></section>
     <section id="panel-skills" class="screen"><div class="location-box"><h2>Система умений</h2><div id="skillList" class="cards"></div></div></section>
-    <section id="panel-character" class="screen"><div class="location-box"><h2>Персонаж</h2><img src="https://placehold.co/640x220/5f564e/fff?text=Hero" alt="hero" style="width:100%;max-height:220px;object-fit:cover"><div id="equipmentSlots" class="equip-grid" style="margin-top:10px"></div></div></section>
+    <section id="panel-character" class="screen"><div class="location-box"><h2>Персонаж</h2><img src="https://placehold.co/640x220/5f564e/fff?text=Hero" alt="hero" style="width:100%;max-height:220px;object-fit:cover"><div id="characterStats" class="item-card" style="margin-top:10px"></div><div id="equipmentSlots" class="equip-grid" style="margin-top:10px"></div></div></section>
   </main>
 </div>
 
@@ -85,7 +88,9 @@
 <div id="battleOverlay" class="battle-overlay"><div class="battle-box"><h2 id="battleTitle">БОЙ</h2><div class="battle-grid"><div class="fighter"><img src="https://placehold.co/360x160/2e5b94/fff?text=Player" alt="player"><div id="battlePlayerHp"></div><div class="bar"><div id="battlePlayerBar" class="fill hp"></div></div></div><div class="fighter"><img id="battleMonsterImg" src="https://placehold.co/360x160/7c2626/fff?text=Monster" alt="monster"><div id="battleMonsterHp"></div><div class="bar"><div id="battleMonsterBar" class="fill mana"></div></div></div></div><div class="row" style="margin-top:10px"><div>⏱ Время: <span id="battleTimer">10</span> сек</div><div><button class="btn" onclick="battleAction('attack')">⚔ Атака</button> <button class="btn secondary" onclick="openSkillChooser()">✦ Умение</button> <button class="btn secondary" onclick="battleAction('wait')">Ждать</button></div></div><div id="battleLog" class="log"></div></div></div>
 
 <div id="skillChooser" class="skill-chooser"><div class="chooser-box"><h2>Выберите умение</h2><div id="skillChooserList" class="cards"></div><button class="btn secondary" onclick="closeSkillChooser()">Закрыть</button></div></div>
+<div id="equipChooser" class="equip-chooser"><div class="chooser-box"><h2 id="equipChooserTitle">Выбор экипировки</h2><div id="equipChooserList" class="cards"></div><button class="btn secondary" onclick="closeEquipChooser()">Закрыть</button></div></div>
 <div id="resultOverlay" class="result-overlay"><div class="result-box"><h2 id="resultTitle"></h2><p id="resultText"></p><div id="resultLoot"></div><button class="btn" onclick="closeResultModal()">Продолжить</button></div></div>
+<div id="toastWrap" class="toast-wrap"></div>
 
 <script src="app.js"></script>
 </body>

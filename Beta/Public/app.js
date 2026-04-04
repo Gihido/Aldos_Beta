@@ -22,6 +22,7 @@ const rand = (a, b) => Math.floor(Math.random() * (b - a + 1)) + a;
 const chance = p => Math.random() * 100 < p;
 const sumWeight = arr => arr.reduce((s, i) => s + (Number(i.weight) || 0), 0);
 const adminState = { locations: [], monsters: [], loot: [], skills: [], items: [], selected: { locationId: null, monsterId: null, lootId: null, skillId: null, itemId: null } };
+let equipChooserSlot = null;
 
 async function api(url, method = "GET", body) {
   const res = await fetch(url, {
@@ -30,6 +31,16 @@ async function api(url, method = "GET", body) {
     body: body ? JSON.stringify(body) : undefined
   });
   return res.json();
+}
+
+function toast(msg) {
+  const wrap = document.getElementById('toastWrap');
+  if (!wrap) return;
+  const el = document.createElement('div');
+  el.className = 'toast';
+  el.textContent = msg;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 2200);
 }
 
 function selectClass(classCode, el) {
@@ -234,6 +245,7 @@ function moveItem(id, from, to) {
   const item = src[idx];
   if (sumWeight(dst) + (Number(item.weight) || 0) > CAPACITY) return;
   src.splice(idx, 1); dst.push(item);
+  toast(`Предмет перемещен: ${item.name}`);
   renderAll();
 }
 
@@ -249,6 +261,7 @@ function equipItem(id, from) {
   if (prev) gameState.inventory.push(prev);
   gameState.equipped[item.equip_slot] = item;
   src.splice(idx, 1);
+  toast(`Экипировано: ${item.name}`);
   renderAll();
 }
 
@@ -258,6 +271,7 @@ function unequip(slot) {
   if (sumWeight(gameState.inventory) + (Number(item.weight) || 0) > CAPACITY) return;
   gameState.equipped[slot] = null;
   gameState.inventory.push(item);
+  toast(`Снято: ${item.name}`);
   renderAll();
 }
 
@@ -275,10 +289,45 @@ function useItem(id, from) {
 }
 
 function renderEquipment() {
+  const armor = Object.values(gameState.equipped).reduce((s, i) => s + Number(i?.armor || 0), 0);
+  const minAtk = gameState.player.base_damage_min + Object.values(gameState.equipped).reduce((s, i) => s + Number(i?.min_damage || 0), 0);
+  const maxAtk = gameState.player.base_damage_max + Object.values(gameState.equipped).reduce((s, i) => s + Number(i?.max_damage || 0), 0);
+  document.getElementById('characterStats').innerHTML = `<b>Характеристики</b><div>Урон: ${minAtk}-${maxAtk}</div><div>Броня: ${armor}</div><div>Крит: ${gameState.player.crit_chance || 0}%</div><div>Блок: ${gameState.user.class_code === 'orc' ? 'Есть' : 'Нет'}</div>`;
   document.getElementById('equipmentSlots').innerHTML = Object.keys(slotRu).map(slot => {
     const it = gameState.equipped[slot];
-    return `<div class='slot'><div class='small'>${slotRu[slot]}</div><strong>${it ? it.name : 'Пусто'}</strong><div class='small'>${it ? statsLine(it) : ''}</div>${it ? `<button class='btn secondary' onclick='unequip("${slot}")'>Снять</button>` : ''}</div>`;
+    return `<div class='slot' onclick='openEquipChooser("${slot}")'><div class='small'>${slotRu[slot]}</div><strong>${it ? it.name : 'Пусто'}</strong><div class='small'>${it ? statsLine(it) : 'Нажмите для выбора'}</div>${it ? `<button class='btn secondary' onclick='event.stopPropagation();unequip("${slot}")'>Снять</button>` : ''}</div>`;
   }).join('');
+}
+
+function openEquipChooser(slot) {
+  equipChooserSlot = slot;
+  const isHand = slot === 'right_hand' || slot === 'left_hand';
+  const candidates = gameState.inventory.filter(i => i.equip_slot === slot || (isHand && i.item_type === 'weapon'));
+  document.getElementById('equipChooserTitle').textContent = `Экипировка: ${slotRu[slot]}`;
+  document.getElementById('equipChooserList').innerHTML = candidates.length
+    ? candidates.map(i => `<div class='item-card'><b>${i.name}</b><div class='small'>${statsLine(i)}</div><button class='btn' onclick='equipFromChooser(${i.id})'>Экипировать</button></div>`).join('')
+    : `<div class='small'>Нет подходящих предметов</div>`;
+  document.getElementById('equipChooser').classList.add('open');
+}
+
+function closeEquipChooser() {
+  document.getElementById('equipChooser').classList.remove('open');
+  equipChooserSlot = null;
+}
+
+function equipFromChooser(itemId) {
+  if (!equipChooserSlot) return;
+  const idx = gameState.inventory.findIndex(i => i.id === itemId);
+  if (idx < 0) return;
+  const item = gameState.inventory[idx];
+  if (item.equip_slot && item.equip_slot !== equipChooserSlot) return;
+  const prev = gameState.equipped[equipChooserSlot];
+  if (prev) gameState.inventory.push(prev);
+  gameState.equipped[equipChooserSlot] = item;
+  gameState.inventory.splice(idx, 1);
+  closeEquipChooser();
+  toast(`Экипировано: ${item.name}`);
+  renderAll();
 }
 
 function renderSkills() {
@@ -510,6 +559,7 @@ async function adminPlayerAction(action) {
   const skillId = Number(document.getElementById('actionSkill').value);
   const result = await api('/api/admin/player-action', 'POST', { userId, action, reason, templateId, skillId });
   document.getElementById('adminMessage').textContent = result.success ? 'Действие выполнено' : (result.message || 'Ошибка');
+  toast(result.success ? 'Действие выполнено' : (result.message || 'Ошибка'));
   await loadAdminAll();
 }
 
@@ -524,17 +574,23 @@ async function submitWithImage(formId, fileInputId, endpoint) {
   const data = formData(formId);
   const file = document.getElementById(fileInputId)?.files?.[0];
   fileToDataUrl(file, data.name || data.code || 'RPG', async (img) => {
-    data.image_url = data.image_url || img;
-    const method = data.id ? 'PUT' : 'POST';
-    const finalEndpoint = data.id ? `${endpoint}/${data.id}` : endpoint;
-    await api(finalEndpoint, method, data);
-    document.getElementById(formId).reset();
-    if (formId === 'locationForm') document.getElementById('locationId').value = '';
-    if (formId === 'monsterForm') document.getElementById('monsterId').value = '';
-    if (formId === 'lootForm') document.getElementById('lootId').value = '';
-    if (formId === 'skillForm') document.getElementById('skillId').value = '';
-    if (formId === 'itemForm') document.getElementById('itemId').value = '';
-    await loadAdminAll();
+    try {
+      data.image_url = file ? img : (data.image_url || img);
+      const method = data.id ? 'PUT' : 'POST';
+      const finalEndpoint = data.id ? `${endpoint}/${data.id}` : endpoint;
+      const result = await api(finalEndpoint, method, data);
+      if (!result.success) return toast(result.message || 'Ошибка сохранения');
+      toast('Сохранено');
+      document.getElementById(formId).reset();
+      if (formId === 'locationForm') document.getElementById('locationId').value = '';
+      if (formId === 'monsterForm') document.getElementById('monsterId').value = '';
+      if (formId === 'lootForm') document.getElementById('lootId').value = '';
+      if (formId === 'skillForm') document.getElementById('skillId').value = '';
+      if (formId === 'itemForm') document.getElementById('itemId').value = '';
+      await loadAdminAll();
+    } catch {
+      toast('Ошибка сохранения картинки');
+    }
   });
 }
 
