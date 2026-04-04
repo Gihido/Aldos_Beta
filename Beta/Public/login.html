@@ -1,0 +1,10 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Вход</title>
+<style>
+:root{--a:#f09a45;--a2:#cf7531}*{box-sizing:border-box}
+body{margin:0;min-height:100vh;display:grid;place-items:center;font-family:Segoe UI,Arial;background:radial-gradient(circle at top,#62594f,#221f1b 70%);color:#fff}
+.card{width:min(480px,92%);background:linear-gradient(180deg,#4d4640,#5d544c);border:1px solid #8c7f72;border-radius:22px;padding:22px;box-shadow:0 20px 40px rgba(0,0,0,.35);animation:up .45s ease}@keyframes up{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.input{width:100%;padding:13px;border-radius:12px;border:1px solid #988779;background:#2f2a26;color:#fff;margin-bottom:10px}
+.btn{width:100%;padding:12px;border:0;border-radius:12px;background:linear-gradient(135deg,var(--a),var(--a2));font-weight:700;cursor:pointer}.msg{margin-top:10px;color:#d7c8b7}
+</style></head>
+<body><div class="card"><h1>Вход в игру</h1><p class="msg">Продолжи приключение</p><input id="username" class="input" placeholder="Логин"><input id="password" type="password" class="input" placeholder="Пароль"><button class="btn" onclick="loginUser()">Войти</button><div id="message" class="msg"></div><div class="msg">Нет аккаунта? <a href="register.html" style="color:#ffd6ac">Регистрация</a></div></div><script src="app.js"></script></body></html>
