@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Text RPG Online</title>
   <style>
-    :root{--panel-open:330px;--panel-close:72px;--bg:#2d2a27;--bg2:#1f1d1a;--panel:#46403a;--panel2:#5a534d;--line:#7c7269;--text:#f4efe8;--muted:#cdc1b3;--accent:#f09a45;--accent2:#cf7531}
-    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;color:var(--text);background:radial-gradient(circle at top,#555049,var(--bg2) 55%)}
+    :root{--panel-open:330px;--panel-close:72px;--bg:#dcdcdc;--bg2:#d7d7d7;--panel:#2b2b2f;--panel2:#1f1f24;--line:#5f5f68;--text:#f4efe8;--muted:#cdc1b3;--accent:#ff9800;--accent2:#ff6f00}
+    *{box-sizing:border-box}body{margin:0;font-family:Segoe UI,Arial,sans-serif;color:#111;background:var(--bg)}
     .app{min-height:100vh;display:grid;grid-template-columns:var(--panel-open) 1fr;gap:14px;padding:14px;transition:.25s}
     .app.sidebar-collapsed{grid-template-columns:var(--panel-close) 1fr}
     .panel{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:16px;box-shadow:0 14px 28px rgba(0,0,0,.25)}
@@ -16,13 +16,13 @@
     .bars{display:grid;gap:8px}.bar{height:12px;background:#211d19;border-radius:999px;overflow:hidden}.fill{height:100%;transition:width .3s ease}.hp{background:linear-gradient(90deg,#ff7e66,#ce4937)}.mana{background:linear-gradient(90deg,#ffbe74,#ff8a2d)}
     .tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px}.tabs button,.btn{border:0;border-radius:12px;padding:11px 12px;font-weight:700;cursor:pointer;transition:.2s ease}
     .tabs button{background:#6c6259;color:#fff}.tabs button.active{background:var(--accent);color:#2a1406}.btn{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#2b1607}.btn.secondary{background:#72685f;color:#fff}.btn.warn{background:#a94747;color:#fff}
-    .content{padding:14px;overflow:auto}.screen{display:none;animation:fade .25s ease}.screen.active{display:block}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .content{padding:14px;overflow:auto;background:#efefef;color:#121212}.screen{display:none;animation:fade .25s ease}.screen.active{display:block}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
     .location-hero{height:180px;border-radius:12px;background-size:cover;background-position:center;position:relative;overflow:hidden;border:1px solid #8a7d71;margin-bottom:10px;animation:locPulse 6s ease-in-out infinite}
     .location-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,rgba(255,158,61,.25),transparent 45%)}@keyframes locPulse{0%{transform:scale(1)}50%{transform:scale(1.015)}100%{transform:scale(1)}}
     .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
     .item-card,.monster-card{background:#3f3832;border:1px solid #8a7d71;border-radius:14px;padding:10px;display:flex;flex-direction:column;gap:8px}.item-top{display:flex;gap:10px;align-items:center}.thumb{width:56px;height:56px;border-radius:10px;border:1px solid #9f8c7a;background:#2c2622;display:grid;place-items:center;font-size:24px;overflow:hidden}
     .monster-image{height:120px;border-radius:10px;background-size:cover;background-position:center;border:1px solid #8a7d71;animation:monsterFloat 4s ease-in-out infinite}@keyframes monsterFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
-    .small{font-size:13px;color:var(--muted)} .row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+    .small{font-size:13px;color:#5a5a5a} .row{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
     .equip-grid{display:grid;grid-template-columns:repeat(3,minmax(140px,1fr));gap:10px}.slot{background:#372f29;border:1px dashed #ad8e74;border-radius:12px;padding:10px;min-height:94px}
     .battle-overlay,.travel-overlay,.skill-chooser,.result-overlay{position:fixed;inset:0;background:rgba(18,14,10,.76);display:none;align-items:center;justify-content:center;padding:15px;z-index:20}
     .battle-overlay.open,.travel-overlay.open,.skill-chooser.open,.result-overlay.open{display:flex}.battle-box,.travel-box,.chooser-box,.result-box{width:min(840px,100%);padding:16px}.battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}

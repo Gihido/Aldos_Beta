@@ -5,19 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Админ панель</title>
   <style>
-    body{margin:0;font-family:Segoe UI,Arial;background:#221f1b;color:#f4efe8}
-    .wrap{max-width:1300px;margin:16px auto;padding:0 10px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:10px}
-    .card{background:#4b433d;border:1px solid #7f7468;border-radius:12px;padding:10px}
-    input,select,textarea,button{width:100%;margin-top:6px;padding:9px;border-radius:8px;border:1px solid #8b7d70}
-    button{background:#f09a45;color:#2b1607;font-weight:700;cursor:pointer;border:0}
-    .item-card{background:#3b342f;border:1px solid #6f6459;border-radius:10px;padding:8px;margin-top:6px}
-    .small{font-size:12px;color:#d0c2b4}
+    body{margin:0;font-family:Segoe UI,Arial;background:#e6e6e6;color:#1b1b1b}
+    .top{background:#6f1fa2;color:#fff;padding:14px 18px;border-bottom:5px solid #4a0f67;font-weight:800;font-size:30px;text-align:center}
+    .wrap{max-width:1360px;margin:14px auto;padding:0 10px}
+    .hint{background:#cfe2f3;border:1px solid #7aa0c3;padding:10px;margin-bottom:10px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px}
+    .card{background:#f7f7f7;border:2px solid #bcc6d1;padding:10px}
+    .card h3{margin:0 0 8px 0;background:#123d73;color:#fff;padding:8px}
+    input,select,textarea,button{width:100%;margin-top:6px;padding:9px;border:1px solid #7c8898}
+    button{background:#ff9800;color:#fff;font-weight:700;cursor:pointer;border:1px solid #b66d00}
+    .item-card{background:#fff;border:1px solid #c7ced8;padding:8px;margin-top:6px;cursor:pointer}
+    .item-card:hover{background:#edf3fb}
+    .small{font-size:12px;color:#374b63}
   </style>
 </head>
 <body onload="loadUsers()">
+  <div class="top">👥 РЕДАКТОР ИГРОВОГО МИРА - АДМИН ПАНЕЛЬ</div>
   <div class="wrap">
-    <h2>Админ-панель Gihido</h2>
+    <div class="hint">
+      Выбери сущность из списка справа/снизу одним кликом — данные автоматически подставятся в форму для редактирования.
+    </div>
     <div id="adminMessage" class="small"></div>
     <div class="grid">
       <div class="card">
