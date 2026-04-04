@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PocketCombats RPG - Web</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;font-family:Tahoma,Segoe UI,Arial;background:radial-gradient(circle at top,#2f323f,#191c25 65%);color:#f3f6ff}
+    .app{min-height:100vh;display:grid;grid-template-columns:290px 1fr;gap:0}
+    .app.sidebar-collapsed{grid-template-columns:56px 1fr}
+    .sidebar{background:linear-gradient(180deg,#232630,#1a1d26);color:#fff;border-right:2px solid #3f4560;padding:12px;overflow:auto;height:100vh;box-shadow:0 0 24px rgba(0,0,0,.35)}
+    .sidebar.closed .hide-when-closed{display:none}
+    .toggle-btn{width:44px;height:44px;background:linear-gradient(135deg,#7c3aed,#4c1d95);color:#fff;border:1px solid #9f67ff;cursor:pointer;font-size:20px;border-radius:10px}
+    .status{margin-top:10px;border:1px solid #3e455d;padding:10px;background:#121621;border-radius:12px}
+    .small{font-size:12px;color:#d3d3d3}.bar{height:16px;background:#fff;border:1px solid #333}.fill{height:100%}.hp{background:#db2f2f}.mana{background:#2a7ac9}
+    .tabs{display:grid;gap:8px;margin-top:12px}
+    .tabs button{padding:11px;border:1px solid #2f364d;color:#fff;font-weight:700;cursor:pointer;text-align:left;border-radius:10px;transition:.2s}
+    .tabs button:hover{transform:translateY(-1px);filter:brightness(1.08)}
+    #tab-location{background:linear-gradient(90deg,#2f95e6,#1c6cab)}
+    #tab-inventory{background:linear-gradient(90deg,#ff9800,#f16d00)}
+    #tab-chest{background:linear-gradient(90deg,#a05a2c,#7d411f)}
+    #tab-skills{background:linear-gradient(90deg,#ff9800,#e36d00)}
+    #tab-character{background:linear-gradient(90deg,#9c27b0,#6f1d84)}
+    #adminEntry{background:linear-gradient(90deg,#4caf50,#2d8a31);display:none}
+    .warn{background:linear-gradient(90deg,#f44336,#b71c1c) !important}
+
+    .main{padding:0 0 14px}
+    .title{background:linear-gradient(90deg,#f0fff4,#d7f2e5);border-bottom:1px solid #b9c7b9;padding:14px 18px;font-size:38px;font-weight:700;color:#1b2f1f}
+    .screen{display:none;padding:16px}.screen.active{display:block}
+    .location-box{background:#f7fafc;border:1px solid #c6d2e2;padding:16px;min-height:calc(100vh - 120px);border-radius:14px}
+    .hero{height:180px;border:1px solid #919191;background-size:cover;background-position:center;margin-bottom:12px;border-radius:12px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .btn{padding:10px 18px;border:1px solid #1e2a3b;cursor:pointer;color:#fff;font-weight:700;background:linear-gradient(90deg,#2f95e6,#1d6ba9);border-radius:10px}
+    .btn.secondary{background:linear-gradient(90deg,#7e8492,#5a6070)}
+    .btn.warn{background:linear-gradient(90deg,#d43838,#9c1f1f)}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-top:14px}
+    .monster-card,.item-card{background:#fff;border:1px solid #bfc9d9;padding:10px;border-radius:12px;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+    .monster-image{height:110px;background-size:cover;background-position:center;border:1px solid #aaa;margin-bottom:6px;border-radius:8px}
+    .item-top{display:flex;gap:8px}.thumb{width:52px;height:52px;border:1px solid #999;display:grid;place-items:center;overflow:hidden}
+
+    .battle-overlay,.travel-overlay,.skill-chooser,.result-overlay,.equip-chooser{position:fixed;inset:0;background:radial-gradient(circle at center,rgba(20,27,40,.84),rgba(5,8,14,.96));display:none;align-items:center;justify-content:center;padding:10px;z-index:20}
+    .battle-overlay.open,.travel-overlay.open,.skill-chooser.open,.result-overlay.open,.equip-chooser.open{display:flex}
+    .battle-box,.chooser-box,.result-box,.travel-box{width:min(1000px,100%);background:linear-gradient(180deg,#0f1522,#0b101a);border:1px solid #2f95e6;color:#fff;padding:12px;border-radius:14px;box-shadow:0 0 24px rgba(47,149,230,.25)}
+    .battle-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .fighter{border:1px solid #3a4e73;padding:10px;border-radius:10px;background:linear-gradient(180deg,#132039,#0d1527)}
+    .fighter img{width:100%;height:170px;object-fit:cover;border-radius:8px}
+    .log{max-height:140px;overflow:auto;border:1px solid #384862;padding:8px;margin-top:10px;background:#0d111a;border-radius:8px}
+    .equip-grid{display:grid;grid-template-columns:repeat(3,minmax(150px,1fr));gap:10px}.slot{background:#fff;border:1px solid #999;padding:8px;color:#111;cursor:pointer}
+    .slot:hover{outline:2px solid #ff9800}
+    .toast-wrap{position:fixed;right:12px;top:12px;z-index:60;display:grid;gap:8px}.toast{background:#25272c;color:#fff;padding:10px 12px;border-left:4px solid #ff9800;min-width:220px;animation:fadein .2s ease}
+    @keyframes fadein{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+    .travel-way{height:16px;border:1px solid #666;background:#222}.travel-progress{height:100%;background:#2f95e6;width:0}
+
+    @media(max-width:900px){.app,.app.sidebar-collapsed{grid-template-columns:1fr}.sidebar{height:auto;position:sticky;top:0;z-index:3}.battle-grid{grid-template-columns:1fr}.equip-grid{grid-template-columns:repeat(2,minmax(120px,1fr))}}
+  </style>
+</head>
+<body onload="loadGame()">
+<div class="app" id="appRoot">
+  <aside id="sidebar" class="sidebar">
+    <button class="toggle-btn" onclick="toggleSidebar()">☰</button>
+    <div class="hide-when-closed">
+      <div class="status"><b>Имя:</b> <span id="playerName">...</span><br><b>Класс:</b> <span id="playerClass"></span></div>
+      <div class="status">
+        <div>HP <span id="hpText"></span></div><div class="bar"><div id="hpBar" class="fill hp"></div></div>
+        <div style="margin-top:6px">MP <span id="manaText"></span></div><div class="bar"><div id="manaBar" class="fill mana"></div></div>
+        <div class="small" style="margin-top:6px">Сумка: <span id="invWeight"></span>/50 • Сундук: <span id="chestWeight"></span>/50</div>
+      </div>
+      <div class="tabs">
+        <button data-tab id="tab-location" onclick="switchPanel('location')">📍 Локация</button>
+        <button data-tab id="tab-inventory" onclick="switchPanel('inventory')">🎒 Сумка</button>
+        <button data-tab id="tab-chest" onclick="switchPanel('chest')">🧰 Сундук</button>
+        <button data-tab id="tab-skills" onclick="switchPanel('skills')">✦ Умения</button>
+        <button data-tab id="tab-character" onclick="switchPanel('character')">👤 Персонаж</button>
+        <button id="adminEntry" onclick="openAdminPanel()">🛠 Редактор</button>
+        <button class="warn" onclick="logout()">⎋ Выйти</button>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="title" id="locationTitle">Локация</div>
+    <section id="panel-location" class="screen">
+      <div class="location-box">
+        <div id="locationHero" class="hero"></div>
+        <div id="locationDescription"></div>
+        <div class="row" id="locationActions" style="margin-top:10px"></div>
+        <div id="monsterList" class="cards"></div>
+      </div>
+    </section>
+
+    <section id="panel-inventory" class="screen"><div class="location-box"><h2>Сумка</h2><div id="inventoryList" class="cards"></div></div></section>
+    <section id="panel-chest" class="screen"><div class="location-box"><h2>Сундук</h2><div id="chestState" class="small"></div><div id="chestList" class="cards"></div></div></section>
+    <section id="panel-skills" class="screen"><div class="location-box"><h2>Система умений</h2><div id="skillList" class="cards"></div></div></section>
+    <section id="panel-character" class="screen"><div class="location-box"><h2>Персонаж</h2><img src="https://placehold.co/640x220/5f564e/fff?text=Hero" alt="hero" style="width:100%;max-height:220px;object-fit:cover"><div id="characterStats" class="item-card" style="margin-top:10px"></div><div id="equipmentSlots" class="equip-grid" style="margin-top:10px"></div></div></section>
+  </main>
+</div>
+
+<div id="travelOverlay" class="travel-overlay"><div class="travel-box"><h2 id="travelText">Переход...</h2><div class="travel-way"><div id="travelProgress" class="travel-progress"></div></div></div></div>
+
+<div id="battleOverlay" class="battle-overlay"><div class="battle-box"><h2 id="battleTitle">БОЙ</h2><div class="battle-grid"><div class="fighter"><img src="https://placehold.co/360x160/2e5b94/fff?text=Player" alt="player"><div id="battlePlayerHp"></div><div class="bar"><div id="battlePlayerBar" class="fill hp"></div></div></div><div class="fighter"><img id="battleMonsterImg" src="https://placehold.co/360x160/7c2626/fff?text=Monster" alt="monster"><div id="battleMonsterHp"></div><div class="bar"><div id="battleMonsterBar" class="fill mana"></div></div></div></div><div class="row" style="margin-top:10px"><div>⏱ Время: <span id="battleTimer">10</span> сек</div><div><button class="btn" onclick="battleAction('attack')">⚔ Атака</button> <button class="btn secondary" onclick="openSkillChooser()">✦ Умение</button> <button class="btn secondary" onclick="battleAction('wait')">Ждать</button></div></div><div id="battleLog" class="log"></div></div></div>
+
+<div id="skillChooser" class="skill-chooser"><div class="chooser-box"><h2>Выберите умение</h2><div id="skillChooserList" class="cards"></div><button class="btn secondary" onclick="closeSkillChooser()">Закрыть</button></div></div>
+<div id="equipChooser" class="equip-chooser"><div class="chooser-box"><h2 id="equipChooserTitle">Выбор экипировки</h2><div id="equipChooserList" class="cards"></div><button class="btn secondary" onclick="closeEquipChooser()">Закрыть</button></div></div>
+<div id="resultOverlay" class="result-overlay"><div class="result-box"><h2 id="resultTitle"></h2><p id="resultText"></p><div id="resultLoot"></div><button class="btn" onclick="closeResultModal()">Продолжить</button></div></div>
+<div id="toastWrap" class="toast-wrap"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
