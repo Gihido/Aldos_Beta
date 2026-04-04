@@ -525,6 +525,13 @@ function fileToDataUrl(file, fallbackTitle, cb) {
 
 async function loadUsers() { await loadAdminAll(); }
 
+function switchAdminTab(tab) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(`section-${tab}`)?.classList.add('active');
+  document.querySelectorAll('[id^=\"tab-admin-\"]').forEach(b => b.classList.remove('active'));
+  document.getElementById(`tab-admin-${tab}`)?.classList.add('active');
+}
+
 async function loadAdminAll() {
   const [users, locations, monsters, loot, skills, items] = await Promise.all([
     api('/api/admin/users'), api('/api/admin/locations'), api('/api/admin/monsters'), api('/api/admin/loot'), api('/api/admin/skills'), api('/api/admin/items')

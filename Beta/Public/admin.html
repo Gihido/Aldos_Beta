@@ -3,91 +3,84 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Редактор игроков (Админ)</title>
+  <title>Админ панель</title>
   <style>
-    *{box-sizing:border-box} body{margin:0;font-family:Tahoma,Segoe UI,Arial;background:#dcdcdc;color:#222}
-    .top1{background:#7621a8;color:#fff;padding:10px 16px;font-size:42px;font-weight:800;text-align:center;border-bottom:4px solid #4a0d69}
-    .top2{background:#4f0f4f;color:#fff;padding:8px 16px;font-size:18px}
-    .wrap{max-width:1500px;margin:14px auto;padding:0 10px}
-    .info{background:#c9d9e8;border:1px solid #8fa7bf;padding:12px;margin-bottom:12px}
-    .tabs{display:flex;gap:2px;margin-bottom:0}.tabs div{padding:8px 12px;background:#dedede;border:1px solid #a9a9a9;font-weight:700}
-    .panel{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
-    .card{background:#f8f8f8;border:1px solid #a9b7c5;padding:10px}
-    .card h3{margin:0 0 8px;background:#d52a2a;color:#fff;padding:8px}
-    .sub{background:#efe5ce;border:1px solid #c7b286;padding:10px;margin-top:8px}
-    .sub.blue{background:#cfe2f3;border-color:#8db1cc}.sub.red{background:#f8d7da;border-color:#d59aa2}
-    input,select,textarea,button{width:100%;margin-top:6px;padding:8px;border:1px solid #7c8898}
-    button{background:#ff9800;color:#fff;border:1px solid #b66d00;font-weight:700;cursor:pointer}
-    .danger{background:#d32f2f;border-color:#8e1f1f}.ok{background:#4caf50;border-color:#296b2b}.bluebtn{background:#2196f3;border-color:#135e99}.violet{background:#8e24aa;border-color:#511366}
-    .item-card{background:#fff;border:1px solid #c4ccd6;padding:8px;margin-top:6px;cursor:pointer}
-    .item-card:hover{background:#eff5fd}
-    .small{font-size:12px;color:#506070}
-    @media(max-width:1100px){.panel{grid-template-columns:1fr}}
+    *{box-sizing:border-box} body{margin:0;font-family:Segoe UI,Tahoma,Arial;background:linear-gradient(140deg,#1e1f26,#2e313d 60%,#3d2a20);color:#fff}
+    .top{padding:14px 18px;background:linear-gradient(90deg,#6a1b9a,#4a148c);border-bottom:2px solid #ffa726;font-size:30px;font-weight:800}
+    .layout{display:grid;grid-template-columns:260px 1fr;min-height:calc(100vh - 66px)}
+    .nav{background:#21242f;border-right:1px solid #4d4d55;padding:12px;display:grid;gap:8px;align-content:start}
+    .nav button{padding:10px;border:1px solid #111;background:#374151;color:#fff;font-weight:700;cursor:pointer;transition:.2s}.nav button.active,.nav button:hover{background:#ff9800}
+    .content{padding:12px}
+    .section{display:none;animation:fade .2s ease}.section.active{display:block}@keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .card{background:#f4f4f4;color:#1d1d1d;border:1px solid #9a9a9a;border-radius:8px;padding:10px}
+    .card h3{margin:0 0 8px;background:#13345a;color:#fff;padding:8px;border-radius:6px}
+    .small{font-size:12px;color:#5e5e5e}
+    input,select,textarea,button{width:100%;margin-top:6px;padding:8px;border-radius:6px;border:1px solid #8a8a8a}
+    button{background:linear-gradient(90deg,#ff9800,#ef6c00);color:#fff;font-weight:700;cursor:pointer}
+    .list{max-height:320px;overflow:auto;border:1px solid #c8c8c8;padding:6px;background:#fff}
+    .item-card{background:#fdfdfd;border:1px solid #d0d0d0;padding:8px;margin-bottom:6px;cursor:pointer}.item-card:hover{background:#e3f2fd}
+    @media(max-width:1000px){.layout{grid-template-columns:1fr}.nav{grid-template-columns:repeat(2,1fr)}}
   </style>
 </head>
-<body onload="loadUsers()">
-  <div class="top1">👥 РЕДАКТОР ИГРОКОВ - АДМИН ПАНЕЛЬ</div>
-  <div class="top2">Выберите игрока, затем редактируйте инвентарь, блокировку, характеристики и контент мира.</div>
+<body onload="loadUsers();switchAdminTab('players')">
+  <div class="top">⚙ АДМИН ПАНЕЛЬ — РАЗДЕЛЫ РЕДАКТИРОВАНИЯ</div>
+  <div class="layout">
+    <aside class="nav">
+      <button id="tab-admin-players" onclick="switchAdminTab('players')">👥 Редактор игроков</button>
+      <button id="tab-admin-locations" onclick="switchAdminTab('locations')">🌍 Редактор локаций</button>
+      <button id="tab-admin-monsters" onclick="switchAdminTab('monsters')">👹 Редактор монстров</button>
+      <button id="tab-admin-loot" onclick="switchAdminTab('loot')">📦 Редактор лута</button>
+      <button id="tab-admin-skills" onclick="switchAdminTab('skills')">✨ Редактор умений</button>
+      <button id="tab-admin-items" onclick="switchAdminTab('items')">🧰 Редактор вещей</button>
+      <button onclick="location.href='game.html'">◀ Назад в игру</button>
+      <button onclick="logout()">⎋ Выйти</button>
+      <div id="adminMessage" class="small"></div>
+    </aside>
 
-  <div class="wrap">
-    <div class="info">
-      <b>ℹ Информация:</b> быстрый режим редактирования. Нажимай на монстра/локацию/умение/вещь в списках — поля формы заполняются автоматически.
-    </div>
+    <main class="content">
+      <section id="section-players" class="section">
+        <div class="grid">
+          <div class="card"><h3>Управление игроком</h3><label>Игрок:</label><select id="playerSelect"></select><textarea id="banReason" placeholder="Причина бана"></textarea><button onclick="adminPlayerAction('ban')">Заблокировать</button><button onclick="adminPlayerAction('unban')">Разблокировать</button><label>Выдать вещь:</label><select id="actionItem"></select><button onclick="adminPlayerAction('give_item')">Выдать вещь</button><label>Выдать умение:</label><select id="actionSkill"></select><button onclick="adminPlayerAction('give_skill')">Выдать умение</button></div>
+          <div class="card"><h3>Список игроков</h3><div id="playerInfo" class="list"></div></div>
+        </div>
+      </section>
 
-    <div class="tabs"><div>Информация</div><div>Инвентарь</div><div>Экипировка</div><div>Управление</div></div>
+      <section id="section-locations" class="section">
+        <div class="grid">
+          <div class="card"><h3>Форма локации</h3><form id="locationForm"><input id="locationId" name="id" type="hidden"><input name="code" placeholder="code" required><input name="name" placeholder="Название" required><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки"><input id="locationImage" type="file" accept="image/*"><input name="next_code" placeholder="next code"><input name="prev_code" placeholder="prev code"><button type="button" onclick="submitWithImage('locationForm','locationImage','/api/admin/locations')">Сохранить</button></form></div>
+          <div class="card"><h3>Все локации</h3><div id="locationsList" class="list"></div></div>
+        </div>
+      </section>
 
-    <div class="panel">
-      <div class="card">
-        <h3>⚙ УПРАВЛЕНИЕ ИГРОКОМ</h3>
-        <div id="adminMessage" class="small"></div>
-        <label>Выберите игрока:</label>
-        <select id="playerSelect"></select>
-        <textarea id="banReason" placeholder="Причина бана"></textarea>
-        <button class="danger" onclick="adminPlayerAction('ban')">🔒 Заблокировать игрока</button>
-        <button class="ok" onclick="adminPlayerAction('unban')">🟢 Разблокировать игрока</button>
-        <label>Выдать вещь:</label><select id="actionItem"></select><button class="bluebtn" onclick="adminPlayerAction('give_item')">🎁 Добавить вещь</button>
-        <label>Выдать умение:</label><select id="actionSkill"></select><button class="violet" onclick="adminPlayerAction('give_skill')">✨ Добавить умение</button>
-        <div id="playerInfo"></div>
-      </div>
+      <section id="section-monsters" class="section">
+        <div class="grid">
+          <div class="card"><h3>Форма монстра</h3><form id="monsterForm"><input id="monsterId" name="id" type="hidden"><input name="code" placeholder="code" required><input name="location_code" placeholder="location code" required><input name="name" placeholder="Название" required><input name="hp" type="number" placeholder="HP" required><input name="max_mana" type="number" placeholder="Mana" value="0"><input name="min_damage" type="number" placeholder="Min dmg" required><input name="max_damage" type="number" placeholder="Max dmg" required><input name="spawn_chance" type="number" placeholder="Шанс появления %" value="100"><input name="image_url" placeholder="URL картинки"><input id="monsterImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('monsterForm','monsterImage','/api/admin/monsters')">Сохранить</button></form></div>
+          <div class="card"><h3>Монстры (главный индекс)</h3><div id="monstersList" class="list"></div></div>
+        </div>
+      </section>
 
-      <div class="card">
-        <h3>🌍 РЕДАКТОР ЛОКАЦИЙ/МОНСТРОВ</h3>
-        <form id="locationForm" class="sub blue">
-          <b>Локация</b>
-          <input id="locationId" name="id" type="hidden"><input name="code" placeholder="code" required><input name="name" placeholder="Название" required><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки"><input id="locationImage" type="file" accept="image/*"><input name="next_code" placeholder="next code"><input name="prev_code" placeholder="prev code"><button type="button" onclick="submitWithImage('locationForm','locationImage','/api/admin/locations')">Сохранить локацию</button>
-        </form>
-        <form id="monsterForm" class="sub">
-          <b>Монстр</b>
-          <input id="monsterId" name="id" type="hidden"><input name="code" placeholder="code" required><input name="location_code" placeholder="location code" required><input name="name" placeholder="Название" required><input name="hp" type="number" placeholder="HP" required><input name="max_mana" type="number" placeholder="Mana" value="0"><input name="min_damage" type="number" placeholder="Min dmg" required><input name="max_damage" type="number" placeholder="Max dmg" required><input name="spawn_chance" type="number" placeholder="Шанс появления %" value="100"><input name="image_url" placeholder="URL картинки"><input id="monsterImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('monsterForm','monsterImage','/api/admin/monsters')">Сохранить монстра</button>
-        </form>
-      </div>
+      <section id="section-loot" class="section">
+        <div class="grid">
+          <div class="card"><h3>Форма лута</h3><form id="lootForm"><input id="lootId" name="id" type="hidden"><input name="monster_id" type="number" placeholder="monster id" required><input name="name" placeholder="Название" required><input name="item_type" placeholder="weapon/armor/consumable" required><input name="equip_slot" placeholder="slot"><input name="min_damage" type="number" placeholder="min dmg"><input name="max_damage" type="number" placeholder="max dmg"><input name="armor" type="number" placeholder="armor"><input name="heal_hp" type="number" placeholder="heal hp"><input name="heal_mana" type="number" placeholder="heal mana"><input name="weight" type="number" placeholder="weight"><input name="chance" type="number" placeholder="chance %"><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки"><input id="lootImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('lootForm','lootImage','/api/admin/loot')">Сохранить</button></form></div>
+          <div class="card"><h3>Список лута</h3><div id="lootList" class="list"></div></div>
+        </div>
+      </section>
 
-      <div class="card">
-        <h3>📦 ЛУТ / УМЕНИЯ / ВЕЩИ</h3>
-        <form id="lootForm" class="sub red">
-          <b>Лут монстра</b>
-          <input id="lootId" name="id" type="hidden"><input name="monster_id" type="number" placeholder="monster id" required><input name="name" placeholder="Название" required><input name="item_type" placeholder="weapon/armor/consumable" required><input name="equip_slot" placeholder="slot"><input name="min_damage" type="number" placeholder="min dmg"><input name="max_damage" type="number" placeholder="max dmg"><input name="armor" type="number" placeholder="armor"><input name="heal_hp" type="number" placeholder="heal hp"><input name="heal_mana" type="number" placeholder="heal mana"><input name="weight" type="number" placeholder="weight"><input name="chance" type="number" placeholder="chance %"><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки"><input id="lootImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('lootForm','lootImage','/api/admin/loot')">Сохранить лут</button>
-        </form>
-        <form id="skillForm" class="sub blue">
-          <b>Умение</b>
-          <input id="skillId" name="id" type="hidden"><input name="code" placeholder="code" required><input name="name" placeholder="Название" required><textarea name="description" placeholder="Описание"></textarea><input name="class_code" placeholder="archer/mage/orc" required><input name="power" type="number" placeholder="power"><input name="mana_cost" type="number" placeholder="mana cost"><input name="effect_type" placeholder="stun/block/crit_boost/none"><input name="effect_chance" type="number" placeholder="effect chance"><input name="cooldown_turns" type="number" placeholder="перезарядка в ходах"><input name="image_url" placeholder="URL картинки"><input id="skillImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('skillForm','skillImage','/api/admin/skills')">Сохранить умение</button>
-        </form>
-        <form id="itemForm" class="sub">
-          <b>Шаблон вещи</b>
-          <input id="itemId" name="id" type="hidden"><input name="code" placeholder="Код вещи"><input name="name" placeholder="Название" required><input name="item_type" placeholder="weapon/armor/consumable" required><input name="equip_slot" placeholder="slot"><input name="min_damage" type="number" placeholder="min dmg"><input name="max_damage" type="number" placeholder="max dmg"><input name="armor" type="number" placeholder="armor"><input name="heal_hp" type="number" placeholder="heal hp"><input name="heal_mana" type="number" placeholder="heal mana"><input name="weight" type="number" placeholder="weight"><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки"><input id="itemImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('itemForm','itemImage','/api/admin/items')">Сохранить шаблон</button>
-        </form>
-      </div>
-    </div>
+      <section id="section-skills" class="section">
+        <div class="grid">
+          <div class="card"><h3>Форма умения</h3><form id="skillForm"><input id="skillId" name="id" type="hidden"><input name="code" placeholder="code" required><input name="name" placeholder="Название" required><textarea name="description" placeholder="Описание"></textarea><input name="class_code" placeholder="archer/mage/orc" required><input name="power" type="number" placeholder="power"><input name="mana_cost" type="number" placeholder="mana cost"><input name="effect_type" placeholder="stun/block/crit_boost/none"><input name="effect_chance" type="number" placeholder="effect chance"><input name="cooldown_turns" type="number" placeholder="перезарядка в ходах"><input name="image_url" placeholder="URL картинки"><input id="skillImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('skillForm','skillImage','/api/admin/skills')">Сохранить</button></form></div>
+          <div class="card"><h3>Список умений</h3><div id="skillsList" class="list"></div></div>
+        </div>
+      </section>
 
-    <div class="panel" style="margin-top:10px;grid-template-columns:1fr 1fr 1fr 1fr 1fr">
-      <div class="card"><h3>Локации</h3><div id="locationsList"></div></div>
-      <div class="card"><h3>Монстры</h3><div id="monstersList"></div></div>
-      <div class="card"><h3>Лут</h3><div id="lootList"></div></div>
-      <div class="card"><h3>Умения</h3><div id="skillsList"></div></div>
-      <div class="card"><h3>Вещи</h3><div id="itemsList"></div></div>
-    </div>
-
-    <div style="margin-top:12px;display:flex;gap:8px"><button class="bluebtn" onclick="location.href='game.html'">◀ Назад в игру</button><button class="danger" onclick="logout()">✖ Выйти</button></div>
+      <section id="section-items" class="section">
+        <div class="grid">
+          <div class="card"><h3>Форма вещи</h3><form id="itemForm"><input id="itemId" name="id" type="hidden"><input name="code" placeholder="Код вещи"><input name="name" placeholder="Название" required><input name="item_type" placeholder="weapon/armor/consumable" required><input name="equip_slot" placeholder="slot"><input name="min_damage" type="number" placeholder="min dmg"><input name="max_damage" type="number" placeholder="max dmg"><input name="armor" type="number" placeholder="armor"><input name="heal_hp" type="number" placeholder="heal hp"><input name="heal_mana" type="number" placeholder="heal mana"><input name="weight" type="number" placeholder="weight"><textarea name="description" placeholder="Описание"></textarea><input name="image_url" placeholder="URL картинки"><input id="itemImage" type="file" accept="image/*"><button type="button" onclick="submitWithImage('itemForm','itemImage','/api/admin/items')">Сохранить</button></form></div>
+          <div class="card"><h3>Все вещи в игре (индекс)</h3><div id="itemsList" class="list"></div></div>
+        </div>
+      </section>
+    </main>
   </div>
   <script src="app.js"></script>
 </body>
